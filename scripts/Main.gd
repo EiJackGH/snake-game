@@ -10,6 +10,8 @@ var next_direction = Vector2.RIGHT
 var food_pos = Vector2(10, 10)
 var score = 0
 var game_over = false
+var is_loading = true
+var loading_screen: ColorRect
 
 # Coin System Definitions
 var coin_pos = Vector2(-1, -1)
@@ -104,6 +106,41 @@ func _ready():
 	spawn_food()
 	update_ui()
 	setup_shop_ui()
+	setup_loading_screen()
+
+func setup_loading_screen():
+	loading_screen = ColorRect.new()
+	loading_screen.color = Color.BLACK
+	loading_screen.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	$CanvasLayer.add_child(loading_screen)
+
+	var vbox = VBoxContainer.new()
+	vbox.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
+	loading_screen.add_child(vbox)
+
+	var title = Label.new()
+	title.text = "SNAKE GAME"
+	title.add_theme_font_size_override("font_size", 32)
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	vbox.add_child(title)
+
+	var progress_bar = ProgressBar.new()
+	progress_bar.custom_minimum_size = Vector2(200, 20)
+	vbox.add_child(progress_bar)
+
+	var loading_label = Label.new()
+	loading_label.text = "Loading..."
+	loading_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	vbox.add_child(loading_label)
+
+	var tween = create_tween()
+	tween.tween_property(progress_bar, "value", 100, 2.0)
+	tween.finished.connect(_on_loading_finished)
+
+func _on_loading_finished():
+	is_loading = false
+	if loading_screen:
+		loading_screen.queue_free()
 	timer.start()
 
 func setup_shop_ui():
@@ -246,6 +283,8 @@ func _on_coin_pack_pressed(amount: int):
 	update_shop_ui()
 
 func _input(event):
+	if is_loading:
+		return
 	if event.is_action_pressed("move_up") and direction != Vector2.DOWN:
 		next_direction = Vector2.UP
 	elif event.is_action_pressed("move_down") and direction != Vector2.UP:
