@@ -24,6 +24,12 @@ const SKINS = {
 	"Crimson": {"head_color": Color.RED, "body_color": Color.DARK_RED, "cost": 150}
 }
 
+const COIN_PACKS = {
+	"Starter Pack": 50,
+	"Booster Pack": 100,
+	"Mega Pack": 500
+}
+
 var owned_skins = ["Default"]
 var active_skin = "Default"
 var shop_panel: Panel
@@ -139,6 +145,11 @@ func setup_shop_ui():
 	items_vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	scroll.add_child(items_vbox)
 
+	var skins_label = Label.new()
+	skins_label.text = "--- SKINS ---"
+	skins_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	items_vbox.add_child(skins_label)
+
 	for skin_name in SKINS.keys():
 		var hbox = HBoxContainer.new()
 		items_vbox.add_child(hbox)
@@ -151,6 +162,29 @@ func setup_shop_ui():
 		var btn = Button.new()
 		btn.name = skin_name + "Button"
 		btn.pressed.connect(_on_skin_button_pressed.bind(skin_name))
+		hbox.add_child(btn)
+
+	var spacer = Control.new()
+	spacer.custom_minimum_size = Vector2(0, 10)
+	items_vbox.add_child(spacer)
+
+	var coins_title_label = Label.new()
+	coins_title_label.text = "--- COIN PACKS ---"
+	coins_title_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	items_vbox.add_child(coins_title_label)
+
+	for pack_name in COIN_PACKS.keys():
+		var hbox = HBoxContainer.new()
+		items_vbox.add_child(hbox)
+
+		var label = Label.new()
+		label.text = pack_name + " (+" + str(COIN_PACKS[pack_name]) + ")"
+		label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		hbox.add_child(label)
+
+		var btn = Button.new()
+		btn.text = "Get"
+		btn.pressed.connect(_on_coin_pack_pressed.bind(COIN_PACKS[pack_name]))
 		hbox.add_child(btn)
 
 	var close_btn = Button.new()
@@ -204,6 +238,12 @@ func _on_skin_button_pressed(skin_name: String):
 	update_ui()
 	update_shop_ui()
 	queue_redraw()
+
+func _on_coin_pack_pressed(amount: int):
+	total_coins += amount
+	save_coins()
+	update_ui()
+	update_shop_ui()
 
 func _input(event):
 	if event.is_action_pressed("move_up") and direction != Vector2.DOWN:
