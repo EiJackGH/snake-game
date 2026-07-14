@@ -17,6 +17,18 @@ var coins_earned = 0
 var total_coins = 0
 var coins_label: Label
 
+const SKINS = {
+	"Default": {"head_color": Color.GREEN, "body_color": Color.DARK_GREEN, "cost": 0},
+	"Neon": {"head_color": Color.CYAN, "body_color": Color.BLUE, "cost": 50},
+	"Royal": {"head_color": Color.GOLD, "body_color": Color.DARK_GOLDENROD, "cost": 100},
+	"Crimson": {"head_color": Color.RED, "body_color": Color.DARK_RED, "cost": 150}
+}
+
+var owned_skins = ["Default"]
+var active_skin = "Default"
+var shop_panel: Panel
+var shop_button: Button
+
 # Power-up Definitions
 enum PowerUpType { NONE, SLOW, DOUBLE_POINTS, SHRINK }
 var power_up_type = PowerUpType.NONE
@@ -40,7 +52,12 @@ const COINS_SAVE_PATH = "user://coins.save"
 func save_coins():
 	var file = FileAccess.open(COINS_SAVE_PATH, FileAccess.WRITE)
 	if file:
-		file.store_line(JSON.stringify({"total_coins": total_coins}))
+		var data = {
+			"total_coins": total_coins,
+			"owned_skins": owned_skins,
+			"active_skin": active_skin
+		}
+		file.store_line(JSON.stringify(data))
 		file.close()
 
 func load_coins():
@@ -52,8 +69,13 @@ func load_coins():
 			var json = JSON.new()
 			if json.parse(content) == OK:
 				var data = json.get_data()
-				if typeof(data) == TYPE_DICTIONARY and data.has("total_coins"):
-					total_coins = int(data["total_coins"])
+				if typeof(data) == TYPE_DICTIONARY:
+					if data.has("total_coins"):
+						total_coins = int(data["total_coins"])
+					if data.has("owned_skins"):
+						owned_skins = data["owned_skins"]
+					if data.has("active_skin"):
+						active_skin = data["active_skin"]
 
 func _ready():
 	randomize()
@@ -75,7 +97,113 @@ func _ready():
 
 	spawn_food()
 	update_ui()
+	setup_shop_ui()
 	timer.start()
+
+func setup_shop_ui():
+	# Shop Button
+	shop_button = Button.new()
+	shop_button.text = "Shop"
+	shop_button.position = Vector2(330, 10)
+	shop_button.hide()
+	shop_button.pressed.connect(toggle_shop.bind(true))
+	$CanvasLayer.add_child(shop_button)
+
+	# Shop Panel
+	shop_panel = Panel.new()
+	shop_panel.custom_minimum_size = Vector2(300, 300)
+	shop_panel.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
+	shop_panel.hide()
+	$CanvasLayer.add_child(shop_panel)
+
+	var margin = 10
+	var vbox = VBoxContainer.new()
+	vbox.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	vbox.offset_left = margin
+	vbox.offset_top = margin
+	vbox.offset_right = -margin
+	vbox.offset_bottom = -margin
+	shop_panel.add_child(vbox)
+
+	var title = Label.new()
+	title.text = "SNAKE SHOP"
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	vbox.add_child(title)
+
+	var scroll = ScrollContainer.new()
+	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	vbox.add_child(scroll)
+
+	var items_vbox = VBoxContainer.new()
+	items_vbox.name = "ItemsVBox"
+	items_vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	scroll.add_child(items_vbox)
+
+	for skin_name in SKINS.keys():
+		var hbox = HBoxContainer.new()
+		items_vbox.add_child(hbox)
+
+		var label = Label.new()
+		label.text = skin_name + " (" + str(SKINS[skin_name].cost) + ")"
+		label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		hbox.add_child(label)
+
+		var btn = Button.new()
+		btn.name = skin_name + "Button"
+		btn.pressed.connect(_on_skin_button_pressed.bind(skin_name))
+		hbox.add_child(btn)
+
+	var close_btn = Button.new()
+	close_btn.text = "Close"
+	close_btn.pressed.connect(toggle_shop.bind(false))
+	vbox.add_child(close_btn)
+
+	update_shop_ui()
+
+func update_shop_ui():
+	if not shop_panel:
+		return
+	var items_vbox = shop_panel.find_child("ItemsVBox")
+	if not items_vbox:
+		return
+	for skin_name in SKINS.keys():
+		var btn = items_vbox.find_child(skin_name + "Button")
+		if btn:
+			if active_skin == skin_name:
+				btn.text = "Equipped"
+				btn.disabled = true
+			elif skin_name in owned_skins:
+				btn.text = "Equip"
+				btn.disabled = false
+			else:
+				btn.text = "Buy (" + str(SKINS[skin_name].cost) + ")"
+				btn.disabled = total_coins < SKINS[skin_name].cost
+
+func toggle_shop(show: bool):
+	if shop_panel:
+		shop_panel.visible = show
+		if show:
+			update_shop_ui()
+			if not game_over:
+				timer.stop()
+		else:
+			if not game_over:
+				timer.start()
+
+func _on_skin_button_pressed(skin_name: String):
+	if skin_name in owned_skins:
+		active_skin = skin_name
+	else:
+		var cost = SKINS[skin_name].cost
+		if total_coins >= cost:
+			total_coins -= cost
+			owned_skins.append(skin_name)
+			active_skin = skin_name
+
+	save_coins()
+	update_ui()
+	update_shop_ui()
+	queue_redraw()
 
 func _input(event):
 	if event.is_action_pressed("move_up") and direction != Vector2.DOWN:
@@ -88,6 +216,8 @@ func _input(event):
 		next_direction = Vector2.RIGHT
 
 	if game_over and event.is_pressed():
+		if shop_panel and shop_panel.visible:
+			return
 		restart_game()
 
 func _on_timer_timeout():
@@ -254,6 +384,12 @@ func end_game():
 	game_over_label.text = "GAME OVER\nEarned: +%d Coins\nTotal: %d Coins\nPress any key" % [coins_earned, total_coins]
 	game_over_label.show()
 
+	if shop_button:
+		shop_button.show()
+
+	if total_coins == 0:
+		toggle_shop(true)
+
 func restart_game():
 	snake = [Vector2(5, 5), Vector2(4, 5), Vector2(3, 5)]
 	direction = Vector2.RIGHT
@@ -265,6 +401,11 @@ func restart_game():
 	# Reset coin states
 	coins_earned = 0
 	coin_pos = Vector2(-1, -1)
+
+	# Reset shop UI
+	if shop_button:
+		shop_button.hide()
+	toggle_shop(false)
 
 	# Reset power-up states
 	power_up_type = PowerUpType.NONE
@@ -311,7 +452,7 @@ func _draw():
 
 	# Draw snake
 	for i in range(snake.size()):
-		var color = Color.GREEN if i == 0 else Color.DARK_GREEN
+		var color = SKINS[active_skin].head_color if i == 0 else SKINS[active_skin].body_color
 		draw_rect(Rect2(snake[i] * GRID_SIZE, Vector2(GRID_SIZE, GRID_SIZE)), color)
 
 	# Draw grid (optional, for visual aid)
