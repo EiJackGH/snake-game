@@ -1,0 +1,43 @@
+[gd_scene load_steps=2 format=3 uid="uid://bv5q3p3v7k8j6"]
+
+[ext_resource type="Script" path="res://scripts/Main.gd" id="1_x8q2y"]
+
+[node name="Main" type="Node2D"]
+script = ExtResource("1_x8q2y")
+
+[node name="Background" type="ColorRect" parent="."]
+offset_right = 400.0
+offset_bottom = 400.0
+color = Color(0, 0, 0, 1)
+
+[node name="Timer" type="Timer" parent="."]
+wait_time = 0.15
+
+[node name="CanvasLayer" type="CanvasLayer" parent="."]
+
+[node name="ScoreLabel" type="Label" parent="CanvasLayer"]
+offset_left = 10.0
+offset_top = 10.0
+offset_right = 74.0
+offset_bottom = 33.0
+text = "Score: 0"
+
+[node name="GameOverLabel" type="Label" parent="CanvasLayer"]
+visible = false
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -87.0
+offset_top = -26.0
+offset_right = 87.0
+offset_bottom = 26.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_font_sizes/font_size = 32
+text = "GAME OVER
+Press any key"
+horizontal_alignment = 1
+
+[connection signal="timeout" from="Timer" to="." method="_on_timer_timeout"]
