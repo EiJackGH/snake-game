@@ -11,12 +11,34 @@ var food_pos = Vector2(10, 10)
 var score = 0
 var game_over = false
 
+# Power-up Definitions
+enum PowerUpType { NONE, SLOW, DOUBLE_POINTS, SHRINK }
+var power_up_type = PowerUpType.NONE
+var power_up_pos = Vector2(-1, -1)
+var power_up_spawn_steps = 0 # Remaining steps before spawn expires
+var active_power_up = PowerUpType.NONE
+var active_power_up_duration = 0 # Remaining active duration in steps
+
+const POWER_UP_SPAWN_DURATION = 40
+const POWER_UP_ACTIVE_DURATION = 50
+const STANDARD_WAIT_TIME = 0.15
+const SLOW_WAIT_TIME = 0.25
+
 @onready var timer = $Timer
 @onready var score_label = $CanvasLayer/ScoreLabel
 @onready var game_over_label = $CanvasLayer/GameOverLabel
+var power_up_label: Label
 
 func _ready():
 	randomize()
+
+	power_up_label = Label.new()
+	power_up_label.name = "PowerUpLabel"
+	power_up_label.position = Vector2(10, 30)
+	# Set a slightly smaller font size or custom styling if desired
+	power_up_label.add_theme_font_size_override("font_size", 14)
+	$CanvasLayer.add_child(power_up_label)
+
 	spawn_food()
 	update_ui()
 	timer.start()
@@ -55,22 +77,109 @@ func _on_timer_timeout():
 
 	# Check food collision
 	if new_head == food_pos:
-		score += 1
+		# Double points if DOUBLE_POINTS is active
+		var points_to_add = 2 if active_power_up == PowerUpType.DOUBLE_POINTS else 1
+		score += points_to_add
 		update_ui()
 		spawn_food()
+		# Try spawning a power-up when food is eaten
+		spawn_power_up()
 	else:
 		snake.pop_back()
+
+	# Check power-up collision
+	if power_up_type != PowerUpType.NONE and new_head == power_up_pos:
+		activate_power_up(power_up_type)
+		power_up_type = PowerUpType.NONE
+		power_up_pos = Vector2(-1, -1)
+
+	# Handle power-up spawn timer decrement
+	if power_up_type != PowerUpType.NONE:
+		power_up_spawn_steps -= 1
+		if power_up_spawn_steps <= 0:
+			power_up_type = PowerUpType.NONE
+			power_up_pos = Vector2(-1, -1)
+
+	# Handle active power-up duration decrement
+	if active_power_up != PowerUpType.NONE:
+		active_power_up_duration -= 1
+		if active_power_up_duration <= 0:
+			deactivate_active_power_up()
+		else:
+			update_ui()
 
 	queue_redraw()
 
 func spawn_food():
 	while true:
 		food_pos = Vector2(randi() % GRID_WIDTH, randi() % GRID_HEIGHT)
-		if not food_pos in snake:
+		if not food_pos in snake and food_pos != power_up_pos:
 			break
+
+func spawn_power_up():
+	# If a power-up is already spawned or active, do not spawn another one
+	if power_up_type != PowerUpType.NONE:
+		return
+
+	if randf() <= 0.3:
+		var types = [PowerUpType.SLOW, PowerUpType.DOUBLE_POINTS, PowerUpType.SHRINK]
+		var chosen_type = types[randi() % types.size()]
+
+		while true:
+			var candidate = Vector2(randi() % GRID_WIDTH, randi() % GRID_HEIGHT)
+			if not candidate in snake and candidate != food_pos:
+				power_up_pos = candidate
+				power_up_type = chosen_type
+				power_up_spawn_steps = POWER_UP_SPAWN_DURATION
+				break
+
+func activate_power_up(type):
+	# Clean up any active power-up first
+	deactivate_active_power_up()
+
+	active_power_up = type
+	active_power_up_duration = POWER_UP_ACTIVE_DURATION
+
+	match type:
+		PowerUpType.SLOW:
+			timer.wait_time = SLOW_WAIT_TIME
+		PowerUpType.DOUBLE_POINTS:
+			pass # Handled in scoring / update_ui
+		PowerUpType.SHRINK:
+			# Shrink snake length in half, minimum 3
+			var new_length = max(3, int(snake.size() / 2))
+			while snake.size() > new_length:
+				snake.pop_back()
+
+	update_ui()
+
+func deactivate_active_power_up():
+	if active_power_up == PowerUpType.SLOW:
+		timer.wait_time = STANDARD_WAIT_TIME
+	active_power_up = PowerUpType.NONE
+	active_power_up_duration = 0
+	update_ui()
 
 func update_ui():
 	score_label.text = "Score: %d" % score
+	if power_up_label:
+		if active_power_up != PowerUpType.NONE:
+			var name_str = ""
+			match active_power_up:
+				PowerUpType.SLOW:
+					name_str = "Slow Mo"
+					power_up_label.add_theme_color_override("font_color", Color.CYAN)
+				PowerUpType.DOUBLE_POINTS:
+					name_str = "2x Points"
+					power_up_label.add_theme_color_override("font_color", Color.YELLOW)
+				PowerUpType.SHRINK:
+					name_str = "Shrink"
+					power_up_label.add_theme_color_override("font_color", Color.MAGENTA)
+			power_up_label.text = "Active: %s (%d)" % [name_str, active_power_up_duration]
+			power_up_label.show()
+		else:
+			power_up_label.text = ""
+			power_up_label.hide()
 
 func end_game():
 	game_over = true
@@ -84,6 +193,15 @@ func restart_game():
 	score = 0
 	game_over = false
 	game_over_label.hide()
+
+	# Reset power-up states
+	power_up_type = PowerUpType.NONE
+	power_up_pos = Vector2(-1, -1)
+	power_up_spawn_steps = 0
+	active_power_up = PowerUpType.NONE
+	active_power_up_duration = 0
+	timer.wait_time = STANDARD_WAIT_TIME
+
 	update_ui()
 	spawn_food()
 	timer.start()
@@ -92,6 +210,23 @@ func restart_game():
 func _draw():
 	# Draw food
 	draw_rect(Rect2(food_pos * GRID_SIZE, Vector2(GRID_SIZE, GRID_SIZE)), Color.RED)
+
+	# Draw power-up
+	if power_up_type != PowerUpType.NONE:
+		var color = Color.WHITE
+		match power_up_type:
+			PowerUpType.SLOW:
+				color = Color.CYAN
+			PowerUpType.DOUBLE_POINTS:
+				color = Color.YELLOW
+			PowerUpType.SHRINK:
+				color = Color.MAGENTA
+		# Outer rect
+		draw_rect(Rect2(power_up_pos * GRID_SIZE, Vector2(GRID_SIZE, GRID_SIZE)), color)
+		# Inner inset box to make it distinct
+		var inset = 4
+		var inner_size = GRID_SIZE - (inset * 2)
+		draw_rect(Rect2(power_up_pos * GRID_SIZE + Vector2(inset, inset), Vector2(inner_size, inner_size)), Color.BLACK)
 
 	# Draw snake
 	for i in range(snake.size()):
