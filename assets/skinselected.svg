@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <defs>
+    <!-- Background Badge Gradient (Dark Coffee/Chocolate) -->
+    <linearGradient id="badgeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#4a2c11"/>
+      <stop offset="100%" stop-color="#261405"/>
+    </linearGradient>
+
+    <!-- Border Metallic Bronze Gradient -->
+    <linearGradient id="borderGrad" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#8a5a36"/>
+      <stop offset="50%" stop-color="#d9a066"/>
+      <stop offset="100%" stop-color="#5c3a21"/>
+    </linearGradient>
+
+    <!-- Snake Body Gradient (Warm Caramel/Oatmeal) -->
+    <linearGradient id="snakeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#e6b383"/>
+      <stop offset="50%" stop-color="#b87d4b"/>
+      <stop offset="100%" stop-color="#73421c"/>
+    </linearGradient>
+
+    <!-- Checkmark Overlay Shadow -->
+    <filter id="dropShadow" x="-10%" y="-10%" width="130%" height="130%">
+      <feDropShadow dx="0" dy="8" stdDeviation="6" flood-color="#000000" flood-opacity="0.5"/>
+    </filter>
+  </defs>
+
+  <!-- Base Circle Badge Wrapper -->
+  <circle cx="256" cy="256" r="230" fill="url(#badgeGrad)" stroke="url(#borderGrad)" stroke-width="16" filter="url(#dropShadow)"/>
+
+  <!-- Concentric Inner Ring Accent -->
+  <circle cx="256" cy="256" r="210" fill="none" stroke="#8a5a36" stroke-width="4" stroke-dasharray="8 8" opacity="0.4"/>
+
+  <!-- Stylized Checkmark Snake Geometry -->
+  <path d="M 140,260 
+           L 220,340 
+           Q 235,355 250,340 
+           L 380,160
+           Q 395,140 375,130
+           Q 355,120 340,140
+           L 230,295
+           L 175,235
+           Q 160,220 140,235
+           Q 120,250 140,260 Z" 
+        fill="url(#snakeGrad)" 
+        filter="url(#dropShadow)"/>
+
+  <!-- Snake Eye (Polished Ivory/Sand Accent) -->
+  <circle cx="365" cy="150" r="7" fill="#f7e1cd"/>
+  <circle cx="367" cy="149" r="2.5" fill="#261405"/>
+
+  <!-- Tongue Detail (Deep Crimson Brown) -->
+  <path d="M 380,140 Q 395,135 405,140" fill="none" stroke="#a64b2a" stroke-width="4" stroke-linecap="round"/>
+</svg>
