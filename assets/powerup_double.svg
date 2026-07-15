@@ -1,0 +1,11 @@
+<svg width="64" height="64" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+  <!-- Outer Gold Rounded Container -->
+  <rect x="4" y="4" width="56" height="56" rx="14" ry="14" fill="#FFD700" stroke="#DAA520" stroke-width="4"/>
+  <!-- Inner Background -->
+  <rect x="10" y="10" width="44" height="44" rx="8" ry="8" fill="#221100"/>
+  <!-- Double Points "2x" Symbol -->
+  <text x="32" y="38" font-family="Impact, Charcoal, sans-serif" font-size="28" font-weight="bold" fill="#FFD700" text-anchor="middle" stroke="#FFFFFF" stroke-width="1">2X</text>
+  <!-- Sparkles -->
+  <polygon points="16,16 18,20 22,21 18,22 16,26 14,22 10,21 14,20" fill="#FFFFFF"/>
+  <polygon points="48,42 49,45 52,46 49,47 48,50 47,47 44,46 47,45" fill="#FFFFFF"/>
+</svg>

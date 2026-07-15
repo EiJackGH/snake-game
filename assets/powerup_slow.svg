@@ -1,0 +1,13 @@
+<svg width="64" height="64" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+  <!-- Outer Cyan Rounded Container -->
+  <rect x="4" y="4" width="56" height="56" rx="14" ry="14" fill="#00E5FF" stroke="#00B0FF" stroke-width="4"/>
+  <!-- Inner Background -->
+  <rect x="10" y="10" width="44" height="44" rx="8" ry="8" fill="#001F3F"/>
+  <!-- Slow/Hourglass Symbol -->
+  <!-- Upper Bulb -->
+  <path d="M20 20 H44 L38 32 H26 Z" fill="#00E5FF"/>
+  <!-- Lower Bulb -->
+  <path d="M26 32 H38 L44 44 H20 Z" fill="#00E5FF"/>
+  <!-- Falling Sand / Stream -->
+  <line x1="32" y1="28" x2="32" y2="38" stroke="#FFFFFF" stroke-width="2" stroke-dasharray="2 2"/>
+</svg>

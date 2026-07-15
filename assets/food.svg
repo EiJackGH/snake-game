@@ -1,0 +1,10 @@
+<svg width="64" height="64" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+  <!-- Stem -->
+  <path d="M32 16 C34 10, 38 8, 42 6" stroke="#8B4513" stroke-width="4" fill="none" stroke-linecap="round"/>
+  <!-- Leaf -->
+  <path d="M32 12 Q42 10 38 18 Q32 16 32 12" fill="#228B22" />
+  <!-- Apple Body -->
+  <path d="M32 18 C22 14, 10 22, 12 38 C14 50, 24 58, 32 54 C40 58, 50 50, 52 38 C54 22, 42 14, 32 18 Z" fill="#FF2400" />
+  <!-- Highlight -->
+  <circle cx="24" cy="28" r="4" fill="#FFFFFF" opacity="0.6"/>
+</svg>
