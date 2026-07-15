@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 170 42" width="170" height="42">
+  <rect x="1" y="1" width="168" height="40" rx="6" fill="#4a3e3d" stroke="#362d2c" stroke-width="2"/>
+
+  <text x="85" y="25" font-family="'Segoe UI', Helvetica, Arial, sans-serif" font-size="13" font-weight="bold" fill="#f5ede6" text-anchor="middle" letter-spacing="0.5">RETURN TO GAME</text>
+</svg>
