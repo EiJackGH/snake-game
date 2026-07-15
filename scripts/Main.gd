@@ -36,6 +36,9 @@ var owned_skins = ["Default"]
 var active_skin = "Default"
 var shop_panel: Panel
 var shop_button: Button
+var out_of_coins_panel: Panel
+var out_of_coins_label: Label
+var current_required_cost: int = 0
 
 # Power-up Definitions
 enum PowerUpType { NONE, SLOW, DOUBLE_POINTS, SHRINK }
@@ -106,6 +109,7 @@ func _ready():
 	spawn_food()
 	update_ui()
 	setup_shop_ui()
+	setup_out_of_coins_ui()
 	setup_loading_screen()
 
 func setup_loading_screen():
@@ -231,6 +235,66 @@ func setup_shop_ui():
 
 	update_shop_ui()
 
+func setup_out_of_coins_ui():
+	# Out of Coins Panel
+	out_of_coins_panel = Panel.new()
+	out_of_coins_panel.custom_minimum_size = Vector2(280, 260)
+	out_of_coins_panel.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
+	out_of_coins_panel.hide()
+	$CanvasLayer.add_child(out_of_coins_panel)
+
+	var margin = 10
+	var vbox = VBoxContainer.new()
+	vbox.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	vbox.offset_left = margin
+	vbox.offset_top = margin
+	vbox.offset_right = -margin
+	vbox.offset_bottom = -margin
+	out_of_coins_panel.add_child(vbox)
+
+	var title = Label.new()
+	title.text = "OUT OF COINS"
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	vbox.add_child(title)
+
+	out_of_coins_label = Label.new()
+	out_of_coins_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	out_of_coins_label.autowrap_mode = TextServer.AUTOWRAP_WORD
+	vbox.add_child(out_of_coins_label)
+
+	var spacer = Control.new()
+	spacer.custom_minimum_size = Vector2(0, 5)
+	vbox.add_child(spacer)
+
+	var quick_buy_title = Label.new()
+	quick_buy_title.text = "--- QUICK BUY ---"
+	quick_buy_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	vbox.add_child(quick_buy_title)
+
+	# Dynamically populate coin packs from COIN_PACKS
+	for pack_name in COIN_PACKS.keys():
+		var hbox = HBoxContainer.new()
+		vbox.add_child(hbox)
+
+		var label = Label.new()
+		label.text = pack_name + " (+" + str(COIN_PACKS[pack_name]) + ")"
+		label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		hbox.add_child(label)
+
+		var btn = Button.new()
+		btn.text = "Get"
+		btn.pressed.connect(_on_out_of_coins_pack_pressed.bind(COIN_PACKS[pack_name]))
+		hbox.add_child(btn)
+
+	var spacer2 = Control.new()
+	spacer2.custom_minimum_size = Vector2(0, 5)
+	vbox.add_child(spacer2)
+
+	var close_btn = Button.new()
+	close_btn.text = "Close"
+	close_btn.pressed.connect(toggle_out_of_coins.bind(false, 0))
+	vbox.add_child(close_btn)
+
 func update_shop_ui():
 	if not shop_panel:
 		return
@@ -248,7 +312,8 @@ func update_shop_ui():
 				btn.disabled = false
 			else:
 				btn.text = "Buy (" + str(SKINS[skin_name].cost) + ")"
-				btn.disabled = total_coins < SKINS[skin_name].cost
+				# Keep Buy button enabled so the user can click it to trigger the "Out of Coins" window
+				btn.disabled = false
 
 func toggle_shop(show: bool):
 	if shop_panel:
@@ -258,8 +323,25 @@ func toggle_shop(show: bool):
 			if not game_over:
 				timer.stop()
 		else:
+			toggle_out_of_coins(false)
 			if not game_over:
 				timer.start()
+
+func toggle_out_of_coins(show: bool, cost: int = 0):
+	if out_of_coins_panel:
+		out_of_coins_panel.visible = show
+		if show:
+			current_required_cost = cost
+			update_out_of_coins_ui()
+			if not game_over:
+				timer.stop()
+		else:
+			if not game_over and (shop_panel == null or not shop_panel.visible):
+				timer.start()
+
+func update_out_of_coins_ui():
+	if out_of_coins_label:
+		out_of_coins_label.text = "You need %d coins!\nYou only have %d coins." % [current_required_cost, total_coins]
 
 func _on_skin_button_pressed(skin_name: String):
 	if skin_name in owned_skins:
@@ -270,6 +352,9 @@ func _on_skin_button_pressed(skin_name: String):
 			total_coins -= cost
 			owned_skins.append(skin_name)
 			active_skin = skin_name
+		else:
+			toggle_out_of_coins(true, cost)
+			return
 
 	save_coins()
 	update_ui()
@@ -281,6 +366,13 @@ func _on_coin_pack_pressed(amount: int):
 	save_coins()
 	update_ui()
 	update_shop_ui()
+
+func _on_out_of_coins_pack_pressed(amount: int):
+	total_coins += amount
+	save_coins()
+	update_ui()
+	update_shop_ui()
+	update_out_of_coins_ui()
 
 func _input(event):
 	if is_loading:
@@ -296,6 +388,8 @@ func _input(event):
 
 	if game_over and event.is_pressed():
 		if shop_panel and shop_panel.visible:
+			return
+		if out_of_coins_panel and out_of_coins_panel.visible:
 			return
 		restart_game()
 
