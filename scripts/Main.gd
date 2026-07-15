@@ -20,10 +20,10 @@ var total_coins = 0
 var coins_label: Label
 
 const SKINS = {
-	"Default": {"head_color": Color.GREEN, "body_color": Color.DARK_GREEN, "cost": 0},
+	"Classic Green": {"head_color": Color.GREEN, "body_color": Color.DARK_GREEN, "cost": 0},
 	"Neon": {"head_color": Color.CYAN, "body_color": Color.BLUE, "cost": 50},
 	"Royal": {"head_color": Color.GOLD, "body_color": Color.DARK_GOLDENROD, "cost": 100},
-	"Crimson": {"head_color": Color.RED, "body_color": Color.DARK_RED, "cost": 150}
+	"Lava Glow": {"head_color": Color.RED, "body_color": Color.DARK_RED, "cost": 150}
 }
 
 const COIN_PACKS = {
