@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 350" width="500" height="350">
+  <defs>
+    <filter id="shadow" x="-10%" y="-10%" width="130%" height="130%">
+      <feDropShadow dx="0" dy="8" stdDeviation="6" flood-color="#000000" flood-opacity="0.4"/>
+    </filter>
+    
+    <linearGradient id="bg-grad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#2a2e3d"/>
+      <stop offset="100%" stop-color="#151821"/>
+    </linearGradient>
+
+    <linearGradient id="btn-grad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#f39c12"/>
+      <stop offset="100%" stop-color="#d35400"/>
+    </linearGradient>
+  </defs>
+
+  <rect x="15" y="15" width="470" height="320" rx="12" fill="url(#bg-grad)" stroke="#4e5569" stroke-width="3" filter="url(#shadow)"/>
+
+  <path d="M 16.5 27 A 10.5 10.5 0 0 1 27 16.5 L 473 16.5 A 10.5 10.5 0 0 1 483.5 27 L 483.5 60 L 16.5 60 Z" fill="#c0392b"/>
+  <text x="250" y="42" font-family="'Segoe UI', Helvetica, Arial, sans-serif" font-size="18" font-weight="bold" fill="#ffffff" text-anchor="middle" letter-spacing="1">TRANSACTION FAILED</text>
+
+  <g transform="translate(250, 125)">
+    <polygon points="0,-35 -35,25 35,25" fill="#f1c40f"/>
+    <circle cx="0" cy="5" r="14" fill="#f39c12" stroke="#d35400" stroke-width="2"/>
+    <text x="0" y="10" font-family="Arial" font-size="16" font-weight="bold" fill="#ffffff" text-anchor="middle">🪙</text>
+    <text x="0" y="20" font-family="Impact, Arial Black" font-size="16" font-weight="bold" fill="#7f8c8d" text-anchor="middle">!</text>
+  </g>
+
+  <text x="250" y="200" font-family="'Segoe UI', Helvetica, Arial, sans-serif" font-size="20" font-weight="bold" fill="#ffffff" text-anchor="middle">Not Enough Coins!</text>
+  <text x="250" y="222" font-family="'Segoe UI', Helvetica, Arial, sans-serif" font-size="13" fill="#a0a7b5" text-anchor="middle">You need more resources to unlock this Snake Skin.</text>
+
+  <g id="btn-shop" cursor="pointer" transform="translate(60, 260)">
+    <rect x="0" y="0" width="170" height="42" rx="6" fill="url(#btn-grad)" stroke="#e67e22" stroke-width="1"/>
+    <text x="85" y="26" font-family="'Segoe UI', Helvetica, Arial, sans-serif" font-size="14" font-weight="bold" fill="#ffffff" text-anchor="middle">GET COINS</text>
+  </g>
+
+  <g id="btn-close" cursor="pointer" transform="translate(270, 260)">
+    <rect x="0" y="0" width="170" height="42" rx="6" fill="#34495e" stroke="#2c3e50" stroke-width="1"/>
+    <text x="85" y="26" font-family="'Segoe UI', Helvetica, Arial, sans-serif" font-size="14" font-weight="bold" fill="#ecf0f1" text-anchor="middle">RETURN TO GAME</text>
+  </g>
+
+</svg>
