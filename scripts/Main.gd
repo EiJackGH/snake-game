@@ -22,7 +22,7 @@ var coins_label: Label
 const SKINS = {
 	"Classic Green": {"head_color": Color.GREEN, "body_color": Color.DARK_GREEN, "cost": 0},
 	"Neon": {"head_color": Color.CYAN, "body_color": Color.BLUE, "cost": 50},
-	"Royal": {"head_color": Color.GOLD, "body_color": Color.DARK_GOLDENROD, "cost": 100},
+	"Royal Purple": {"head_color": Color.PURPLE, "body_color": Color.DARK_GOLDENROD, "cost": 100},
 	"Lava Glow": {"head_color": Color.RED, "body_color": Color.DARK_RED, "cost": 150}
 }
 
