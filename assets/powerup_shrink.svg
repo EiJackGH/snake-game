@@ -1,0 +1,13 @@
+<svg width="64" height="64" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+  <!-- Outer Magenta Rounded Container -->
+  <rect x="4" y="4" width="56" height="56" rx="14" ry="14" fill="#FF00FF" stroke="#C71585" stroke-width="4"/>
+  <!-- Inner Background -->
+  <rect x="10" y="10" width="44" height="44" rx="8" ry="8" fill="#200020"/>
+  <!-- Inward Shrinking Arrows -->
+  <!-- Top-Left pointing Center -->
+  <path d="M16 16 L28 28 M28 20 V28 H20" stroke="#FF00FF" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  <!-- Bottom-Right pointing Center -->
+  <path d="M48 48 L36 36 M36 44 V36 H44" stroke="#FF00FF" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  <!-- Center Dot -->
+  <circle cx="32" cy="32" r="3" fill="#FFFFFF"/>
+</svg>
