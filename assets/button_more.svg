@@ -1,0 +1,10 @@
+<svg width="170" height="42" viewBox="0 0 170 42" xmlns="http://www.w3.org/2000/svg">
+  <!-- Rounded Button Container with dual-layer premium border -->
+  <rect x="2" y="2" width="166" height="38" rx="8" fill="#D38312" stroke="#A35400" stroke-width="3"/>
+  <!-- Shiny highlight across top half -->
+  <path d="M5 5 L165 5 Q165 20, 85 20 Q5 20, 5 5 Z" fill="#FFFFFF" opacity="0.15"/>
+  <!-- Inset Shadow Area -->
+  <rect x="6" y="28" width="158" height="8" rx="4" fill="#A35400" opacity="0.3"/>
+  <!-- Button Text "MORE" -->
+  <text x="85" y="27" font-family="Arial, sans-serif" font-size="18" font-weight="bold" fill="#FFFFFF" text-anchor="middle" letter-spacing="2">MORE</text>
+</svg>

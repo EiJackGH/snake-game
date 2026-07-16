@@ -59,19 +59,31 @@ var particles = []
 
 # Textures
 var tex_food: Texture2D
+var tex_food_cherry: Texture2D
+var tex_food_banana: Texture2D
+var tex_food_orange: Texture2D
 var tex_coin: Texture2D
 var tex_pow_slow: Texture2D
 var tex_pow_double: Texture2D
 var tex_pow_shrink: Texture2D
+var tex_pow_shield: Texture2D
+var tex_pow_magnet: Texture2D
 var tex_gameover: Texture2D
 var tex_shop_bg: Texture2D
 var tex_skin_selected: Texture2D
 var tex_out_of_coins: Texture2D
 var tex_btn_get_coins: Texture2D
 var tex_btn_return_to_game: Texture2D
+var tex_trophy: Texture2D
+var tex_btn_more: Texture2D
+
+var food_textures = []
+var current_food_texture: Texture2D
+var trophy_rect: TextureRect
+var more_info_panel: Panel
 
 # Power-up Definitions
-enum PowerUpType { NONE, SLOW, DOUBLE_POINTS, SHRINK }
+enum PowerUpType { NONE, SLOW, DOUBLE_POINTS, SHRINK, SHIELD, MAGNET }
 var power_up_type = PowerUpType.NONE
 var power_up_pos = Vector2(-1, -1)
 var power_up_spawn_steps = 0 # Remaining steps before spawn expires
@@ -133,16 +145,26 @@ func _ready():
 
 	# Load texture assets
 	tex_food = load("res://assets/food.svg") as Texture2D
+	tex_food_cherry = load("res://assets/food_cherry.svg") as Texture2D
+	tex_food_banana = load("res://assets/food_banana.svg") as Texture2D
+	tex_food_orange = load("res://assets/food_orange.svg") as Texture2D
 	tex_coin = load("res://assets/coin.svg") as Texture2D
 	tex_pow_slow = load("res://assets/powerup_slow.svg") as Texture2D
 	tex_pow_double = load("res://assets/powerup_double.svg") as Texture2D
 	tex_pow_shrink = load("res://assets/powerup_shrink.svg") as Texture2D
+	tex_pow_shield = load("res://assets/powerup_shield.svg") as Texture2D
+	tex_pow_magnet = load("res://assets/powerup_magnet.svg") as Texture2D
 	tex_gameover = load("res://assets/gameover.svg") as Texture2D
 	tex_shop_bg = load("res://assets/snakeskinshop.svg") as Texture2D
 	tex_skin_selected = load("res://assets/skinselected.svg") as Texture2D
 	tex_out_of_coins = load("res://assets/window_out_of_coins.svg") as Texture2D
 	tex_btn_get_coins = load("res://assets/get_coins_button.svg") as Texture2D
 	tex_btn_return_to_game = load("res://assets/return_to_game_button.svg") as Texture2D
+	tex_trophy = load("res://assets/trophy.svg") as Texture2D
+	tex_btn_more = load("res://assets/button_more.svg") as Texture2D
+
+	food_textures = [tex_food, tex_food_cherry, tex_food_banana, tex_food_orange]
+	current_food_texture = tex_food
 
 	coins_label = Label.new()
 	coins_label.name = "CoinsLabel"
@@ -160,6 +182,21 @@ func _ready():
 	power_up_label.add_theme_color_override("font_outline_color", Color.BLACK)
 	power_up_label.add_theme_constant_override("outline_size", 4)
 	$CanvasLayer.add_child(power_up_label)
+
+	# Trophy Icon in UI near high score
+	trophy_rect = TextureRect.new()
+	trophy_rect.name = "TrophyIcon"
+	trophy_rect.texture = tex_trophy
+	trophy_rect.custom_minimum_size = Vector2(16, 16)
+	trophy_rect.size = Vector2(16, 16)
+	trophy_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	trophy_rect.position = Vector2(10, 10)
+	$CanvasLayer.add_child(trophy_rect)
+
+	# Shift ScoreLabel slightly to the right to make room for the Trophy icon
+	score_label.position = Vector2(30, 10)
+
+	setup_more_info_panel()
 
 	spawn_food()
 	update_ui()
@@ -181,6 +218,59 @@ func spawn_burst(pos: Vector2, color: Color, count: int = 15):
 			"size": randf_range(3.0, 6.0)
 		}
 		particles.append(p)
+
+func setup_more_info_panel():
+	more_info_panel = Panel.new()
+	more_info_panel.custom_minimum_size = Vector2(280, 210)
+	more_info_panel.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
+	more_info_panel.hide()
+
+	# Flat dark stylebox matching coffee theme
+	var panel_style = StyleBoxFlat.new()
+	panel_style.bg_color = Color(0.12, 0.08, 0.05)
+	panel_style.border_width_left = 3
+	panel_style.border_width_right = 3
+	panel_style.border_width_top = 3
+	panel_style.border_width_bottom = 3
+	panel_style.border_color = Color(0.83, 0.51, 0.07) # Gold border
+	panel_style.set_corner_radius_all(10)
+	more_info_panel.add_theme_stylebox_override("panel", panel_style)
+	$CanvasLayer.add_child(more_info_panel)
+
+	var vbox = VBoxContainer.new()
+	vbox.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	vbox.offset_left = 10
+	vbox.offset_top = 10
+	vbox.offset_right = -10
+	vbox.offset_bottom = -10
+	vbox.add_theme_constant_override("separation", 10)
+	more_info_panel.add_child(vbox)
+
+	var title = Label.new()
+	title.text = "GAME ASSETS & POWERUPS"
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title.add_theme_font_size_override("font_size", 16)
+	title.add_theme_color_override("font_color", Color(0.95, 0.61, 0.07))
+	title.add_theme_color_override("font_outline_color", Color.BLACK)
+	title.add_theme_constant_override("outline_size", 4)
+	vbox.add_child(title)
+
+	var desc = RichTextLabel.new()
+	desc.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	desc.bbcode_enabled = true
+	desc.text = "[center]Explore our new fruits:\n🍎 Apple | 🍒 Cherry\n🍌 Banana | 🍊 Orange\n\nNew Power-ups:\n🛡️ Shield (Immunity)\n🧲 Magnet (Attracts Coins)[/center]"
+	desc.add_theme_color_override("default_color", Color(0.97, 0.86, 0.77))
+	vbox.add_child(desc)
+
+	var close_btn = Button.new()
+	close_btn.text = "Close"
+	var btn_style_normal = create_button_style(Color(0.29, 0.24, 0.24), Color(0.21, 0.18, 0.17), 6)
+	close_btn.add_theme_stylebox_override("normal", btn_style_normal)
+	close_btn.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
+	close_btn.pressed.connect(func():
+		more_info_panel.hide()
+	)
+	vbox.add_child(close_btn)
 
 func setup_pause_overlay():
 	pause_overlay = ColorRect.new()
@@ -241,6 +331,18 @@ func setup_pause_overlay():
 	restart_btn.add_theme_stylebox_override("pressed", brown_pressed)
 	restart_btn.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
 	vbox.add_child(restart_btn)
+
+	# Adding a custom "More Assets Info" button using the tex_btn_more SVG texture
+	var more_btn = TextureButton.new()
+	more_btn.texture_normal = tex_btn_more
+	more_btn.custom_minimum_size = Vector2(170, 42)
+	more_btn.ignore_texture_size = true
+	more_btn.stretch_mode = TextureButton.STRETCH_KEEP_ASPECT_CENTERED
+	more_btn.pressed.connect(func():
+		if more_info_panel:
+			more_info_panel.show()
+	)
+	vbox.add_child(more_btn)
 
 func toggle_pause():
 	if game_over or is_loading:
@@ -693,13 +795,19 @@ func _on_timer_timeout():
 
 	# Check wall collision
 	if new_head.x < 0 or new_head.x >= GRID_WIDTH or new_head.y < 0 or new_head.y >= GRID_HEIGHT:
-		end_game()
-		return
+		if active_power_up == PowerUpType.SHIELD:
+			# Wrap around if shield is active instead of dying
+			new_head.x = posmod(new_head.x, GRID_WIDTH)
+			new_head.y = posmod(new_head.y, GRID_HEIGHT)
+		else:
+			end_game()
+			return
 
 	# Check self collision
 	if new_head in snake:
-		end_game()
-		return
+		if active_power_up != PowerUpType.SHIELD:
+			end_game()
+			return
 
 	snake.insert(0, new_head)
 
@@ -726,6 +834,15 @@ func _on_timer_timeout():
 		spawn_power_up()
 	else:
 		snake.pop_back()
+
+	# Magnet effect: pull the coin 1 step closer to the head if active
+	if active_power_up == PowerUpType.MAGNET and coin_pos != Vector2(-1, -1):
+		var diff = new_head - coin_pos
+		if diff.length_squared() <= 16: # within 4 cells
+			var move_dir = diff.sign() # move 1 cell towards snake head
+			var target_pos = coin_pos + move_dir
+			if not target_pos in snake and target_pos != food_pos and target_pos != power_up_pos:
+				coin_pos = target_pos
 
 	# Check coin collision
 	if coin_pos != Vector2(-1, -1) and new_head == coin_pos:
@@ -778,6 +895,8 @@ func spawn_food():
 		food_pos = Vector2(randi() % GRID_WIDTH, randi() % GRID_HEIGHT)
 		if not food_pos in snake and food_pos != power_up_pos and food_pos != coin_pos:
 			break
+	if food_textures.size() > 0:
+		current_food_texture = food_textures[randi() % food_textures.size()]
 
 func spawn_coin():
 	if coin_pos != Vector2(-1, -1):
@@ -795,12 +914,12 @@ func spawn_power_up():
 		return
 
 	if randf() <= 0.3:
-		var types = [PowerUpType.SLOW, PowerUpType.DOUBLE_POINTS, PowerUpType.SHRINK]
+		var types = [PowerUpType.SLOW, PowerUpType.DOUBLE_POINTS, PowerUpType.SHRINK, PowerUpType.SHIELD, PowerUpType.MAGNET]
 		var chosen_type = types[randi() % types.size()]
 
 		while true:
 			var candidate = Vector2(randi() % GRID_WIDTH, randi() % GRID_HEIGHT)
-			if not candidate in snake and candidate != food_pos:
+			if not candidate in snake and candidate != food_pos and candidate != coin_pos:
 				power_up_pos = candidate
 				power_up_type = chosen_type
 				power_up_spawn_steps = POWER_UP_SPAWN_DURATION
@@ -823,6 +942,10 @@ func activate_power_up(type):
 			var new_length = max(3, int(snake.size() / 2))
 			while snake.size() > new_length:
 				snake.pop_back()
+		PowerUpType.SHIELD:
+			pass # Grants temporary immunity to crashes
+		PowerUpType.MAGNET:
+			pass # In magnet mode, we can automatically pull the coin closer if it's spawned
 
 	update_ui()
 
@@ -857,6 +980,12 @@ func update_ui():
 				PowerUpType.SHRINK:
 					name_str = "Shrink"
 					power_up_label.add_theme_color_override("font_color", Color.MAGENTA)
+				PowerUpType.SHIELD:
+					name_str = "Shield"
+					power_up_label.add_theme_color_override("font_color", Color(0.0, 1.0, 1.0))
+				PowerUpType.MAGNET:
+					name_str = "Magnet"
+					power_up_label.add_theme_color_override("font_color", Color(1.0, 0.4, 0.4))
 			power_up_label.text = "Active: %s (%d)" % [name_str, active_power_up_duration]
 			power_up_label.show()
 		else:
@@ -968,7 +1097,9 @@ func _draw():
 	var food_center = food_pos * GRID_SIZE + Vector2(GRID_SIZE/2.0, GRID_SIZE/2.0) + bob_offset
 	var food_size = Vector2(GRID_SIZE, GRID_SIZE) * scale_factor
 	var food_rect = Rect2(food_center - food_size/2.0, food_size)
-	if tex_food:
+	if current_food_texture:
+		draw_texture_rect(current_food_texture, food_rect, false)
+	elif tex_food:
 		draw_texture_rect(tex_food, food_rect, false)
 	else:
 		draw_rect(food_rect, Color.RED)
@@ -1001,6 +1132,10 @@ func _draw():
 				tex_pow = tex_pow_double
 			PowerUpType.SHRINK:
 				tex_pow = tex_pow_shrink
+			PowerUpType.SHIELD:
+				tex_pow = tex_pow_shield
+			PowerUpType.MAGNET:
+				tex_pow = tex_pow_magnet
 
 		if tex_pow:
 			draw_texture_rect(tex_pow, p_rect, false)
@@ -1013,6 +1148,10 @@ func _draw():
 					color = Color.YELLOW
 				PowerUpType.SHRINK:
 					color = Color.MAGENTA
+				PowerUpType.SHIELD:
+					color = Color(0.0, 1.0, 1.0)
+				PowerUpType.MAGNET:
+					color = Color(1.0, 0.4, 0.4)
 			draw_rect(p_rect, color)
 			var inset = 4
 			var inner_size = (GRID_SIZE - (inset * 2)) * (1.0 + 0.08 * cos(time_sec * 12.0))
