@@ -1,0 +1,9 @@
+<svg width="64" height="64" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+  <!-- Banana stem/tip -->
+  <path d="M46 14 C48 16, 44 20, 42 22 L44 24 C46 22, 50 18, 48 14 Z" fill="#8B7355"/>
+  <!-- Banana body -->
+  <path d="M44 20 C32 30, 20 30, 12 46 C22 46, 38 42, 46 24 C44 22, 45 21, 44 20 Z" fill="#FFD700" stroke="#DAA520" stroke-width="1.5"/>
+  <path d="M42 22 C32 30, 22 31, 15 45" stroke="#B8860B" stroke-width="1.5" fill="none"/>
+  <!-- Bottom tip -->
+  <path d="M12 46 C11 47, 10 49, 10 50 C11 50, 13 49, 14 47 Z" fill="#5C4033"/>
+</svg>

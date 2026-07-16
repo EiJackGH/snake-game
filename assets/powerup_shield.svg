@@ -1,0 +1,10 @@
+<svg width="64" height="64" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+  <!-- Outer Shield Glow -->
+  <circle cx="32" cy="32" r="26" fill="none" stroke="#00FFFF" stroke-width="2" opacity="0.4"/>
+  <!-- Main Shield Shape -->
+  <path d="M32 12 C44 12, 48 16, 48 28 C48 42, 38 48, 32 52 C26 48, 16 42, 16 28 C16 16, 20 12, 32 12 Z" fill="#008B8B" stroke="#00FFFF" stroke-width="3"/>
+  <!-- Inner Detail -->
+  <path d="M32 18 C39 18, 42 21, 42 28 C42 38, 36 43, 32 46 C28 43, 22 38, 22 28 C22 21, 25 18, 32 18 Z" fill="#00CED1" opacity="0.6"/>
+  <!-- Highlight Star/Cross in center -->
+  <path d="M32 24 L32 38 M25 31 L39 31" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round"/>
+</svg>
