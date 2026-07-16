@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 64" width="256" height="64">
+  <defs>
+    <!-- Rich Natural Green Gradients for a Premium Organic Look -->
+    <linearGradient id="classicGreenBody" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#22c55e"/>
+      <stop offset="100%" stop-color="#15803d"/>
+    </linearGradient>
+    <linearGradient id="classicGreenBelly" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#4ade80"/>
+      <stop offset="100%" stop-color="#22c55e"/>
+    </linearGradient>
+  </defs>
+
+  <!-- ==================================================== -->
+  <!-- 1. SNAKE HEAD COMPONENT (Offset: 0, 0)               -->
+  <!-- ==================================================== -->
+  <g id="skin-head" transform="translate(0, 0)">
+    <!-- Smooth Rounded Head Base Geometry -->
+    <rect width="64" height="64" rx="22" fill="url(#classicGreenBody)"/>
+    <!-- Minimalist Clean Eyes (Flat design layout, no retro blockiness) -->
+    <circle cx="20" cy="22" r="7" fill="#ffffff"/>
+    <circle cx="20" cy="22" r="3.5" fill="#0f172a"/>
+    <circle cx="44" cy="22" r="7" fill="#ffffff"/>
+    <circle cx="44" cy="22" r="3.5" fill="#0f172a"/>
+    <!-- Cute Rounded Nostril Accents -->
+    <circle cx="26" cy="46" r="2" fill="#14532d" opacity="0.6"/>
+    <circle cx="38" cy="46" r="2" fill="#14532d" opacity="0.6"/>
+  </g>
+
+  <!-- ==================================================== -->
+  <!-- 2. STRAIGHT BODY SEGMENT (Offset: 64, 0)             -->
+  <!-- ==================================================== -->
+  <g id="skin-body-straight" transform="translate(64, 0)">
+    <!-- Main Body Base Block -->
+    <rect width="64" height="64" rx="12" fill="url(#classicGreenBody)"/>
+    <!-- Subtle Layered Scale Underlay Pattern -->
+    <path d="M 12,32 Q 32,52 52,32" fill="none" stroke="#16a34a" stroke-width="6" stroke-linecap="round" opacity="0.4"/>
+    <path d="M 22,20 Q 32,32 42,20" fill="none" stroke="#16a34a" stroke-width="4" stroke-linecap="round" opacity="0.3"/>
+  </g>
+
+  <!-- ==================================================== -->
+  <!-- 3. TURN / CORNER SEGMENT (Offset: 128, 0)            -->
+  <!-- ==================================================== -->
+  <g id="skin-body-bend" transform="translate(128, 0)">
+    <!-- Complex Corner Contour Shape -->
+    <path d="M 0,0 L 64,0 C 64,35 35,64 0,64 Z" fill="url(#classicGreenBody)"/>
+    <!-- Concentric Inner Scale Curve lines for movement flow visualization -->
+    <path d="M 0,16 C 26,16 48,38 48,64" fill="none" stroke="#4ade80" stroke-width="4" opacity="0.25"/>
+    <path d="M 0,32 C 18,32 32,46 32,64" fill="none" stroke="#14532d" stroke-width="4" opacity="0.3"/>
+  </g>
+
+  <!-- ==================================================== -->
+  <!-- 4. TAIL END PIECE (Offset: 192, 0)                   -->
+  <!-- ==================================================== -->
+  <g id="skin-tail" transform="translate(192, 0)">
+    <!-- Tapered Point Shape Pointing Downwards -->
+    <path d="M 0,0 L 64,0 C 64,0 54,44 32,64 C 10,44 0,0 0,0 Z" fill="url(#classicGreenBody)"/>
+    <!-- Soft Accent Tip Gradient Layer -->
+    <path d="M 16,36 C 24,48 32,58 32,58 C 32,58 40,48 48,36 Z" fill="url(#classicGreenBelly)" opacity="0.5"/>
+  </g>
+</svg>
