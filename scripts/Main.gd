@@ -123,9 +123,12 @@ func setup_loading_screen():
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	vbox.add_child(title)
 
-	var progress_bar = ProgressBar.new()
-	progress_bar.custom_minimum_size = Vector2(200, 20)
-	vbox.add_child(progress_bar)
+	vbox.add_theme_constant_override("separation", 15)
+
+	var loading_bar = TextureRect.new()
+	loading_bar.custom_minimum_size = Vector2(200, 40)
+	loading_bar.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	vbox.add_child(loading_bar)
 
 	var loading_label = Label.new()
 	loading_label.text = "Loading..."
@@ -133,7 +136,18 @@ func setup_loading_screen():
 	vbox.add_child(loading_label)
 
 	var tween = create_tween()
-	tween.tween_property(progress_bar, "value", 100, 2.0)
+	tween.tween_method(func(val: float):
+		if val < 20.0:
+			loading_bar.texture = load("res://assets/loading_bar_phase_0.svg")
+		elif val < 45.0:
+			loading_bar.texture = load("res://assets/loading_bar_phase_1.svg")
+		elif val < 70.0:
+			loading_bar.texture = load("res://assets/loading_bar_phase_2.svg")
+		elif val < 95.0:
+			loading_bar.texture = load("res://assets/loading_bar_phase_3.svg")
+		else:
+			loading_bar.texture = load("res://assets/loading_bar_phase_4.svg")
+	, 0.0, 100.0, 2.0)
 	tween.finished.connect(_on_loading_finished)
 
 func _on_loading_finished():
