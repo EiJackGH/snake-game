@@ -1,0 +1,80 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 700 550" width="100%" height="100%">
+  <defs>
+    <!-- Modern Minimalist Gradient Background (Deep Chocolate Canvas) -->
+    <linearGradient id="panelBg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#28160f"/>
+      <stop offset="100%" stop-color="#140b07"/>
+    </linearGradient>
+
+    <!-- Content Scroller Inset Slot Gradient -->
+    <linearGradient id="scrollBg" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#1b0e0a"/>
+      <stop offset="100%" stop-color="#23130d"/>
+    </linearGradient>
+
+    <!-- Typography Color Profile Elements -->
+    <linearGradient id="accentText" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#f7dcc4"/>
+      <stop offset="100%" stop-color="#dba37b"/>
+    </linearGradient>
+
+    <!-- Smooth Interface Box Shadow -->
+    <filter id="panelShadow" x="-10%" y="-10%" width="130%" height="130%">
+      <feDropShadow dx="0" dy="12" stdDeviation="16" flood-color="#000000" flood-opacity="0.7"/>
+    </filter>
+  </defs>
+
+  <!-- Base UI Container Panel Node -->
+  <rect width="700" height="550" rx="24" fill="url(#panelBg)" stroke="#3e2317" stroke-width="3" filter="url(#panelShadow)"/>
+
+  <!-- Header Title Section Layout -->
+  <g transform="translate(50, 55)">
+    <!-- Security Shield Clean Minimal Icon -->
+    <path d="M 0,0 L 24,-8 L 48,0 L 48,16 C 48,32 24,44 24,44 C 24,44 0,32 0,16 Z" fill="none" stroke="#dba37b" stroke-width="3" stroke-linejoin="round"/>
+    <path d="M 18,20 L 23,25 L 32,14" fill="none" stroke="#dba37b" stroke-width="3" stroke-linecap="round"/>
+    
+    <!-- Title Text Block -->
+    <text x="70" y="28" font-family="system-ui, -apple-system, sans-serif" font-weight="800" font-size="26" letter-spacing="2" fill="url(#accentText)">PRIVACY POLICY</text>
+    <text x="70" y="46" font-family="system-ui, -apple-system, sans-serif" font-weight="500" font-size="12" letter-spacing="4" fill="#8c5835">AGREEMENT REQUIRED</text>
+  </g>
+
+  <!-- ==================================================== -->
+  <!-- EMBEDDED TEXT CONSOLE BOX (The Scrollable Track Region) -->
+  <!-- ==================================================== -->
+  <rect x="50" y="130" width="600" height="270" rx="12" fill="url(#scrollBg)" stroke="#2d1911" stroke-width="2"/>
+
+  <!-- Embedded Legal Text Content Layers -->
+  <g font-family="system-ui, -apple-system, sans-serif" font-size="13" fill="#dba37b" opacity="0.9" letter-spacing="0.5">
+    <text x="75" y="165" font-weight="700" fill="#f7dcc4">1. DATA COLLECTION &amp; SCORE TRACKING</text>
+    <text x="75" y="185">This Snake Game local runtime client processes standard structural metric data</text>
+    <text x="75" y="203">including personal high-score milestones, local coins earned parameters, and</text>
+    <text x="75" y="221">gameplay analytics. No outside identifying user profiles are shared.</text>
+
+    <text x="75" y="260" font-weight="700" fill="#f7dcc4">2. LOCAL PERSISTENT STORAGE LAYER</text>
+    <text x="75" y="280">Your gameplay transaction logs are stored directly on your physical hardware</text>
+    <text x="75" y="298">device utilizing encrypted Godot configurations (user://snake_stats.cfg).</text>
+    <text x="75" y="316">Clearing app caches completely removes your earned coin balances.</text>
+
+    <text x="75" y="355" font-weight="700" fill="#f7dcc4">3. THIRD-PARTY PACKAGES &amp; EXPORT CHECKS</text>
+    <text x="75" y="375">Standard engine compilation hooks process hardware state details exclusively to</text>
+    <text x="75" y="393">validate local regional operations compliance rules (e.g., Greenland checks).</text>
+  </g>
+
+  <!-- Faux UI Scrollbar Track Detail Graphic -->
+  <rect x="636" y="140" width="6" height="250" rx="3" fill="#2d1911"/>
+  <rect x="636" y="140" width="6" height="90" rx="3" fill="#8c5835" opacity="0.6"/>
+
+  <!-- Action Hint Sub-Footer Typography -->
+  <text x="350" y="440" font-family="system-ui, -apple-system, sans-serif" font-weight="500" font-size="13" letter-spacing="1" fill="#8c5835" text-anchor="middle">By advancing past this game, you authorize these system rules.</text>
+
+  <!-- Faux Flat Interaction Controls Template Area (For Engine Button Alignment References) -->
+  <g opacity="0.4" transform="translate(0, 5)">
+    <!-- Decline Graphic Target Slot -->
+    <rect x="180" y="465" width="150" height="42" rx="10" fill="none" stroke="#8c5835" stroke-width="2"/>
+    <text x="255" y="491" font-family="system-ui, -apple-system, sans-serif" font-weight="700" font-size="14" fill="#8c5835" text-anchor="middle">DECLINE</text>
+
+    <!-- Accept Graphic Target Slot -->
+    <rect x="370" y="465" width="150" height="42" rx="10" fill="#8c5835"/>
+    <text x="445" y="491" font-family="system-ui, -apple-system, sans-serif" font-weight="700" font-size="14" fill="#140b07" text-anchor="middle">ACCEPT</text>
+  </g>
+</svg>
