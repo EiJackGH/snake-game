@@ -1,0 +1,80 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 650 450" width="100%" height="100%">
+  <defs>
+    <!-- Modern Minimalist Gradient Background (Deep Espresso to Charcoal Dark Chocolate) -->
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#26150f"/>
+      <stop offset="100%" stop-color="#120906"/>
+    </linearGradient>
+
+    <!-- Cream / Caramel Text Highlight Gradient -->
+    <linearGradient id="textGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#f7dcc4"/>
+      <stop offset="100%" stop-color="#dba37b"/>
+    </linearGradient>
+
+    <!-- Subdued Earthy Alert Accent Gradient -->
+    <linearGradient id="alertGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#8f5733"/>
+      <stop offset="100%" stop-color="#54311b"/>
+    </linearGradient>
+
+    <!-- Premium Clean Drop Shadow for UI Depth -->
+    <filter id="smoothShadow" x="-10%" y="-10%" width="130%" height="130%">
+      <feDropShadow dx="0" dy="16" stdDeviation="14" flood-color="#000000" flood-opacity="0.6"/>
+    </filter>
+  </defs>
+
+  <!-- Main Rounded Window Canvas Background Container -->
+  <rect width="650" height="450" rx="28" fill="url(#bgGrad)" stroke="#3d2216" stroke-width="2"/>
+
+  <!-- Core Content Group inside Shadow -->
+  <g filter="url(#smoothShadow)">
+    
+    <!-- Abstract Globe / Latitude Grid Lines Minimalist Graphic -->
+    <circle cx="325" cy="140" r="55" fill="none" stroke="#54311b" stroke-width="3" opacity="0.3"/>
+    <path d="M 270,140 Q 325,170 380,140 M 270,140 Q 325,110 380,140" fill="none" stroke="#54311b" stroke-width="2" opacity="0.2"/>
+    <line x1="325" y1="85" x2="325" y2="195" stroke="#54311b" stroke-width="2" opacity="0.2"/>
+    
+    <!-- Minimalist Document/Region Blocked Alert Icon Element -->
+    <rect x="305" y="115" width="40" height="50" rx="6" fill="url(#alertGrad)"/>
+    <!-- Tiny cross line representing restriction -->
+    <path d="M 317,140 L 333,140" stroke="#f7dcc4" stroke-width="3" stroke-linecap="round" opacity="0.9"/>
+
+    <!-- Main Heading Notification Text: REGION UNSUPPORTED -->
+    <text x="325" y="245" 
+          font-family="system-ui, -apple-system, SF Pro Display, Roboto, sans-serif" 
+          font-weight="800" 
+          font-size="36" 
+          letter-spacing="4"
+          fill="url(#textGrad)" 
+          text-anchor="middle">
+      REGION UNSUPPORTED
+    </text>
+
+    <!-- Detailed Geographic Alert Content Message Strings -->
+    <text x="325" y="295" 
+          font-family="system-ui, -apple-system, SF Pro Text, Roboto, sans-serif" 
+          font-weight="500" 
+          font-size="16" 
+          letter-spacing="1"
+          fill="#dba37b" 
+          opacity="0.9"
+          text-anchor="middle">
+      Snake Game is currently unavailable in your territory.
+    </text>
+    
+    <text x="325" y="325" 
+          font-family="system-ui, -apple-system, SF Pro Text, Roboto, sans-serif" 
+          font-weight="400" 
+          font-size="14" 
+          letter-spacing="0.5"
+          fill="#a88165" 
+          opacity="0.7"
+          text-anchor="middle">
+      Location Flagged: Greenland (GL)
+    </text>
+
+    <!-- Decorative Interface Base Bar Detail -->
+    <rect x="225" y="380" width="200" height="4" rx="2" fill="#54311b" opacity="0.4"/>
+  </g>
+</svg>
