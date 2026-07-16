@@ -7,6 +7,7 @@ const GRID_HEIGHT = 20
 var snake = [Vector2(5, 5), Vector2(4, 5), Vector2(3, 5)]
 var direction = Vector2.RIGHT
 var next_direction = Vector2.RIGHT
+var input_queue = []
 var food_pos = Vector2(10, 10)
 var score = 0
 var game_over = false
@@ -18,6 +19,19 @@ var coin_pos = Vector2(-1, -1)
 var coins_earned = 0
 var total_coins = 0
 var coins_label: Label
+
+# Sound Manager
+var sound_mgr: SoundManager
+
+# Score Manager
+var score_mgr: ScoreManager
+
+# Pause State Overlay
+var is_paused = false
+var pause_overlay: ColorRect
+
+# Out Of Coins Popup Overlay
+var out_of_coins_panel: Panel
 
 const SKINS = {
 	"Classic Green": {"head_color": Color.GREEN, "body_color": Color.DARK_GREEN, "cost": 0},
@@ -31,10 +45,28 @@ const COIN_PACKS = {
 	"Mega Pack": 500
 }
 
-var owned_skins = ["Default"]
-var active_skin = "Default"
+var owned_skins = ["Classic Green"]
+var active_skin = "Classic Green"
 var shop_panel: Panel
 var shop_button: Button
+
+# Screen Shake Variables
+var shake_intensity = 0.0
+var shake_decay = 0.9
+
+# Retro Particles
+var particles = []
+
+# Textures
+var tex_food: Texture2D
+var tex_coin: Texture2D
+var tex_pow_slow: Texture2D
+var tex_pow_double: Texture2D
+var tex_pow_shrink: Texture2D
+var tex_gameover: Texture2D
+var tex_shop_bg: Texture2D
+var tex_skin_selected: Texture2D
+var tex_out_of_coins: Texture2D
 
 # Power-up Definitions
 enum PowerUpType { NONE, SLOW, DOUBLE_POINTS, SHRINK }
@@ -85,27 +117,113 @@ func load_coins():
 						active_skin = data["active_skin"]
 
 func _ready():
+	process_mode = Node.PROCESS_MODE_ALWAYS
 	randomize()
 	load_coins()
+
+	# Instantiate and setup SoundManager
+	sound_mgr = SoundManager.new()
+	add_child(sound_mgr)
+
+	# Instantiate and setup ScoreManager
+	score_mgr = ScoreManager.new()
+	add_child(score_mgr)
+
+	# Load texture assets
+	tex_food = load("res://assets/food.svg") as Texture2D
+	tex_coin = load("res://assets/coin.svg") as Texture2D
+	tex_pow_slow = load("res://assets/powerup_slow.svg") as Texture2D
+	tex_pow_double = load("res://assets/powerup_double.svg") as Texture2D
+	tex_pow_shrink = load("res://assets/powerup_shrink.svg") as Texture2D
+	tex_gameover = load("res://assets/gameover.svg") as Texture2D
+	tex_shop_bg = load("res://assets/snakeskinshop.svg") as Texture2D
+	tex_skin_selected = load("res://assets/skinselected.svg") as Texture2D
+	tex_out_of_coins = load("res://assets/window_out_of_coins.svg") as Texture2D
 
 	coins_label = Label.new()
 	coins_label.name = "CoinsLabel"
 	coins_label.position = Vector2(10, 30)
 	coins_label.add_theme_font_size_override("font_size", 14)
 	coins_label.add_theme_color_override("font_color", Color.YELLOW)
+	coins_label.add_theme_color_override("font_outline_color", Color.BLACK)
+	coins_label.add_theme_constant_override("outline_size", 4)
 	$CanvasLayer.add_child(coins_label)
 
 	power_up_label = Label.new()
 	power_up_label.name = "PowerUpLabel"
 	power_up_label.position = Vector2(10, 50)
-	# Set a slightly smaller font size or custom styling if desired
 	power_up_label.add_theme_font_size_override("font_size", 14)
+	power_up_label.add_theme_color_override("font_outline_color", Color.BLACK)
+	power_up_label.add_theme_constant_override("outline_size", 4)
 	$CanvasLayer.add_child(power_up_label)
 
 	spawn_food()
 	update_ui()
 	setup_shop_ui()
+	setup_out_of_coins_popup()
+	setup_pause_overlay()
 	setup_loading_screen()
+
+func spawn_burst(pos: Vector2, color: Color, count: int = 15):
+	for i in range(count):
+		var angle = randf() * TAU
+		var speed = randf_range(40.0, 120.0)
+		var p = {
+			"pos": pos,
+			"vel": Vector2(cos(angle), sin(angle)) * speed,
+			"color": color,
+			"life": randf_range(0.3, 0.6),
+			"max_life": 0.6,
+			"size": randf_range(3.0, 6.0)
+		}
+		particles.append(p)
+
+func setup_pause_overlay():
+	pause_overlay = ColorRect.new()
+	pause_overlay.color = Color(0, 0, 0, 0.7) # semi-transparent dark pane
+	pause_overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	pause_overlay.hide()
+	$CanvasLayer.add_child(pause_overlay)
+
+	var vbox = VBoxContainer.new()
+	vbox.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
+	vbox.add_theme_constant_override("separation", 20)
+	pause_overlay.add_child(vbox)
+
+	var title = Label.new()
+	title.text = "GAME PAUSED"
+	title.add_theme_font_size_override("font_size", 24)
+	title.add_theme_color_override("font_color", Color.WHITE)
+	title.add_theme_color_override("font_outline_color", Color.BLACK)
+	title.add_theme_constant_override("outline_size", 6)
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	vbox.add_child(title)
+
+	var resume_btn = Button.new()
+	resume_btn.text = "Resume Game"
+	resume_btn.custom_minimum_size = Vector2(160, 40)
+	resume_btn.pressed.connect(toggle_pause)
+	vbox.add_child(resume_btn)
+
+	var restart_btn = Button.new()
+	restart_btn.text = "Restart"
+	restart_btn.custom_minimum_size = Vector2(160, 40)
+	restart_btn.pressed.connect(func():
+		toggle_pause()
+		restart_game()
+	)
+	vbox.add_child(restart_btn)
+
+func toggle_pause():
+	if game_over or is_loading:
+		return
+	if shop_panel and shop_panel.visible:
+		return # block pausing while shop is open to prevent UI clashing
+
+	is_paused = not is_paused
+	get_tree().paused = is_paused
+	if pause_overlay:
+		pause_overlay.visible = is_paused
 
 func setup_loading_screen():
 	loading_screen = ColorRect.new()
@@ -120,6 +238,8 @@ func setup_loading_screen():
 	var title = Label.new()
 	title.text = "SNAKE GAME"
 	title.add_theme_font_size_override("font_size", 32)
+	title.add_theme_color_override("font_outline_color", Color.BLACK)
+	title.add_theme_constant_override("outline_size", 8)
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	vbox.add_child(title)
 
@@ -132,6 +252,8 @@ func setup_loading_screen():
 
 	var loading_label = Label.new()
 	loading_label.text = "Loading..."
+	loading_label.add_theme_color_override("font_outline_color", Color.BLACK)
+	loading_label.add_theme_constant_override("outline_size", 4)
 	loading_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	vbox.add_child(loading_label)
 
@@ -156,6 +278,80 @@ func _on_loading_finished():
 		loading_screen.queue_free()
 	timer.start()
 
+func setup_out_of_coins_popup():
+	out_of_coins_panel = Panel.new()
+	out_of_coins_panel.custom_minimum_size = Vector2(240, 160)
+	out_of_coins_panel.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
+	out_of_coins_panel.hide()
+	$CanvasLayer.add_child(out_of_coins_panel)
+
+	# Inset background
+	var bg = TextureRect.new()
+	bg.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	bg.stretch_mode = TextureRect.STRETCH_SCALE
+	if tex_out_of_coins:
+		bg.texture = tex_out_of_coins
+	out_of_coins_panel.add_child(bg)
+
+	var vbox = VBoxContainer.new()
+	vbox.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	vbox.offset_left = 10
+	vbox.offset_top = 10
+	vbox.offset_right = -10
+	vbox.offset_bottom = -10
+	vbox.add_theme_constant_override("separation", 10)
+	out_of_coins_panel.add_child(vbox)
+
+	var title = Label.new()
+	title.text = "OUT OF COINS!"
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title.add_theme_color_override("font_color", Color.RED)
+	title.add_theme_font_size_override("font_size", 16)
+	title.add_theme_color_override("font_outline_color", Color.BLACK)
+	title.add_theme_constant_override("outline_size", 4)
+	vbox.add_child(title)
+
+	var desc = Label.new()
+	desc.text = "You need more coins to unlock this skin."
+	desc.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	desc.autowrap_mode = TextServer.AUTOWRAP_WORD
+	desc.add_theme_font_size_override("font_size", 12)
+	desc.add_theme_color_override("font_outline_color", Color.BLACK)
+	desc.add_theme_constant_override("outline_size", 4)
+	vbox.add_child(desc)
+
+	var hbox = HBoxContainer.new()
+	hbox.alignment = BoxContainer.ALIGNMENT_CENTER
+	hbox.add_theme_constant_override("separation", 15)
+	vbox.add_child(hbox)
+
+	var btn_get = Button.new()
+	btn_get.text = "Get Coins (+50)"
+	btn_get.pressed.connect(func():
+		_on_coin_pack_pressed(50)
+		close_out_of_coins_popup()
+	)
+	hbox.add_child(btn_get)
+
+	var btn_close = Button.new()
+	btn_close.text = "Close"
+	btn_close.pressed.connect(close_out_of_coins_popup)
+	hbox.add_child(btn_close)
+
+func trigger_out_of_coins_popup():
+	if out_of_coins_panel:
+		out_of_coins_panel.show()
+		# Add a scaling pop-up bounce animation
+		out_of_coins_panel.pivot_offset = out_of_coins_panel.size / 2.0
+		out_of_coins_panel.scale = Vector2(0.6, 0.6)
+		var tween = create_tween()
+		tween.tween_property(out_of_coins_panel, "scale", Vector2(1.1, 1.1), 0.15)
+		tween.tween_property(out_of_coins_panel, "scale", Vector2(1.0, 1.0), 0.08)
+
+func close_out_of_coins_popup():
+	if out_of_coins_panel:
+		out_of_coins_panel.hide()
+
 func setup_shop_ui():
 	# Shop Button
 	shop_button = Button.new()
@@ -172,7 +368,26 @@ func setup_shop_ui():
 	shop_panel.hide()
 	$CanvasLayer.add_child(shop_panel)
 
-	var margin = 10
+	# Add background texture to shop panel using an inset TextureRect
+	var shop_bg_rect = TextureRect.new()
+	shop_bg_rect.name = "ShopBackground"
+	shop_bg_rect.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	shop_bg_rect.stretch_mode = TextureRect.STRETCH_SCALE
+	if tex_shop_bg:
+		shop_bg_rect.texture = tex_shop_bg
+	else:
+		# fall back to solid panel color
+		var style = StyleBoxFlat.new()
+		style.bg_color = Color(0.12, 0.12, 0.16)
+		style.border_width_left = 2
+		style.border_width_right = 2
+		style.border_width_top = 2
+		style.border_width_bottom = 2
+		style.border_color = Color.YELLOW
+		shop_panel.add_theme_stylebox_override("panel", style)
+	shop_panel.add_child(shop_bg_rect)
+
+	var margin = 15
 	var vbox = VBoxContainer.new()
 	vbox.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	vbox.offset_left = margin
@@ -184,6 +399,9 @@ func setup_shop_ui():
 	var title = Label.new()
 	title.text = "SNAKE SHOP"
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title.add_theme_font_size_override("font_size", 20)
+	title.add_theme_color_override("font_outline_color", Color.BLACK)
+	title.add_theme_constant_override("outline_size", 6)
 	vbox.add_child(title)
 
 	var scroll = ScrollContainer.new()
@@ -198,6 +416,8 @@ func setup_shop_ui():
 	var skins_label = Label.new()
 	skins_label.text = "--- SKINS ---"
 	skins_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	skins_label.add_theme_color_override("font_outline_color", Color.BLACK)
+	skins_label.add_theme_constant_override("outline_size", 4)
 	items_vbox.add_child(skins_label)
 
 	for skin_name in SKINS.keys():
@@ -205,9 +425,21 @@ func setup_shop_ui():
 		items_vbox.add_child(hbox)
 
 		var label = Label.new()
-		label.text = skin_name + " (" + str(SKINS[skin_name].cost) + ")"
+		label.text = skin_name + " (" + str(SKINS[skin_name].cost) + "c)"
 		label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		label.add_theme_color_override("font_outline_color", Color.BLACK)
+		label.add_theme_constant_override("outline_size", 4)
 		hbox.add_child(label)
+
+		# Selected visual indicator (checkmark icon)
+		var checkmark = TextureRect.new()
+		checkmark.name = skin_name + "Checkmark"
+		checkmark.custom_minimum_size = Vector2(24, 24)
+		checkmark.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		if tex_skin_selected:
+			checkmark.texture = tex_skin_selected
+		checkmark.hide()
+		hbox.add_child(checkmark)
 
 		var btn = Button.new()
 		btn.name = skin_name + "Button"
@@ -221,6 +453,8 @@ func setup_shop_ui():
 	var coins_title_label = Label.new()
 	coins_title_label.text = "--- COIN PACKS ---"
 	coins_title_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	coins_title_label.add_theme_color_override("font_outline_color", Color.BLACK)
+	coins_title_label.add_theme_constant_override("outline_size", 4)
 	items_vbox.add_child(coins_title_label)
 
 	for pack_name in COIN_PACKS.keys():
@@ -230,6 +464,8 @@ func setup_shop_ui():
 		var label = Label.new()
 		label.text = pack_name + " (+" + str(COIN_PACKS[pack_name]) + ")"
 		label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		label.add_theme_color_override("font_outline_color", Color.BLACK)
+		label.add_theme_constant_override("outline_size", 4)
 		hbox.add_child(label)
 
 		var btn = Button.new()
@@ -252,16 +488,25 @@ func update_shop_ui():
 		return
 	for skin_name in SKINS.keys():
 		var btn = items_vbox.find_child(skin_name + "Button")
+		var checkmark = items_vbox.find_child(skin_name + "Checkmark")
+
+		# Update checkmark visibility
+		if checkmark:
+			checkmark.visible = (active_skin == skin_name)
+
 		if btn:
 			if active_skin == skin_name:
 				btn.text = "Equipped"
 				btn.disabled = true
+				btn.hide() # hide equipped button since checkmark indicates it
 			elif skin_name in owned_skins:
 				btn.text = "Equip"
 				btn.disabled = false
+				btn.show()
 			else:
 				btn.text = "Buy (" + str(SKINS[skin_name].cost) + ")"
 				btn.disabled = total_coins < SKINS[skin_name].cost
+				btn.show()
 
 func toggle_shop(show: bool):
 	if shop_panel:
@@ -283,6 +528,9 @@ func _on_skin_button_pressed(skin_name: String):
 			total_coins -= cost
 			owned_skins.append(skin_name)
 			active_skin = skin_name
+		else:
+			trigger_out_of_coins_popup()
+			return
 
 	save_coins()
 	update_ui()
@@ -298,23 +546,61 @@ func _on_coin_pack_pressed(amount: int):
 func _input(event):
 	if is_loading:
 		return
-	if event.is_action_pressed("move_up") and direction != Vector2.DOWN:
-		next_direction = Vector2.UP
-	elif event.is_action_pressed("move_down") and direction != Vector2.UP:
-		next_direction = Vector2.DOWN
-	elif event.is_action_pressed("move_left") and direction != Vector2.RIGHT:
-		next_direction = Vector2.LEFT
-	elif event.is_action_pressed("move_right") and direction != Vector2.LEFT:
-		next_direction = Vector2.RIGHT
+
+	if event.is_action_pressed("ui_cancel"):
+		toggle_pause()
+		get_viewport().set_input_as_handled()
+		return
+
+	if is_paused:
+		return
+
+	var last_queued = next_direction
+	if input_queue.size() > 0:
+		last_queued = input_queue[input_queue.size() - 1]
+
+	if event.is_action_pressed("move_up") and last_queued != Vector2.DOWN:
+		input_queue.append(Vector2.UP)
+	elif event.is_action_pressed("move_down") and last_queued != Vector2.UP:
+		input_queue.append(Vector2.DOWN)
+	elif event.is_action_pressed("move_left") and last_queued != Vector2.RIGHT:
+		input_queue.append(Vector2.LEFT)
+	elif event.is_action_pressed("move_right") and last_queued != Vector2.LEFT:
+		input_queue.append(Vector2.RIGHT)
 
 	if game_over and event.is_pressed():
 		if shop_panel and shop_panel.visible:
 			return
 		restart_game()
 
+func _process(delta):
+	if not is_loading:
+		# Apply screen shake decay and random offsets to Node2D position
+		if shake_intensity > 0.1:
+			var rand_offset = Vector2(randf_range(-shake_intensity, shake_intensity), randf_range(-shake_intensity, shake_intensity))
+			position = rand_offset
+			shake_intensity *= shake_decay
+		else:
+			position = Vector2.ZERO
+			shake_intensity = 0.0
+
+		# Update particles
+		var remaining_particles = []
+		for p in particles:
+			p.pos += p.vel * delta
+			p.life -= delta
+			if p.life > 0:
+				remaining_particles.append(p)
+		particles = remaining_particles
+
+		queue_redraw()
+
 func _on_timer_timeout():
 	if game_over:
 		return
+
+	if input_queue.size() > 0:
+		next_direction = input_queue.pop_front()
 
 	direction = next_direction
 	var new_head = snake[0] + direction
@@ -333,6 +619,10 @@ func _on_timer_timeout():
 
 	# Check food collision
 	if new_head == food_pos:
+		shake_intensity = 6.0
+		spawn_burst(food_pos * GRID_SIZE + Vector2(GRID_SIZE/2.0, GRID_SIZE/2.0), Color.RED, 15)
+		if sound_mgr:
+			sound_mgr.play_sfx("eat")
 		# Double points if DOUBLE_POINTS is active
 		var points_to_add = 2 if active_power_up == PowerUpType.DOUBLE_POINTS else 1
 		score += points_to_add
@@ -353,6 +643,10 @@ func _on_timer_timeout():
 
 	# Check coin collision
 	if coin_pos != Vector2(-1, -1) and new_head == coin_pos:
+		shake_intensity = 8.0
+		spawn_burst(coin_pos * GRID_SIZE + Vector2(GRID_SIZE/2.0, GRID_SIZE/2.0), Color.YELLOW, 20)
+		if sound_mgr:
+			sound_mgr.play_sfx("coin")
 		var bonus_coins = 10 if active_power_up == PowerUpType.DOUBLE_POINTS else 5
 		coins_earned += bonus_coins
 		coin_pos = Vector2(-1, -1)
@@ -360,6 +654,18 @@ func _on_timer_timeout():
 
 	# Check power-up collision
 	if power_up_type != PowerUpType.NONE and new_head == power_up_pos:
+		shake_intensity = 10.0
+		var p_color = Color.WHITE
+		match power_up_type:
+			PowerUpType.SLOW:
+				p_color = Color.CYAN
+			PowerUpType.DOUBLE_POINTS:
+				p_color = Color.YELLOW
+			PowerUpType.SHRINK:
+				p_color = Color.MAGENTA
+		spawn_burst(power_up_pos * GRID_SIZE + Vector2(GRID_SIZE/2.0, GRID_SIZE/2.0), p_color, 25)
+		if sound_mgr:
+			sound_mgr.play_sfx("powerup")
 		activate_power_up(power_up_type)
 		power_up_type = PowerUpType.NONE
 		power_up_pos = Vector2(-1, -1)
@@ -442,7 +748,13 @@ func deactivate_active_power_up():
 	update_ui()
 
 func update_ui():
-	score_label.text = "Score: %d" % score
+	var high_score = 0
+	if score_mgr:
+		high_score = score_mgr.current_high_score
+	score_label.text = "Score: %d | Best: %d" % [score, max(score, high_score)]
+	if score_label:
+		score_label.add_theme_color_override("font_outline_color", Color.BLACK)
+		score_label.add_theme_constant_override("outline_size", 4)
 	if coins_label:
 		coins_label.text = "Coins: +%d (Total: %d)" % [coins_earned, total_coins]
 	if power_up_label:
@@ -465,15 +777,43 @@ func update_ui():
 			power_up_label.hide()
 
 func end_game():
+	shake_intensity = 15.0
+	spawn_burst(snake[0] * GRID_SIZE + Vector2(GRID_SIZE/2.0, GRID_SIZE/2.0), SKINS[active_skin].head_color, 30)
+	if sound_mgr:
+		sound_mgr.play_sfx("game_over")
 	game_over = true
 	timer.stop()
+
+	# Update persistent high score
+	var is_new_record = false
+	if score_mgr:
+		is_new_record = score_mgr.check_and_update_high_score(score)
 
 	# Commit earned coins to total_coins and save
 	total_coins += coins_earned
 	save_coins()
 
-	# Update GameOverLabel to show earned and total coins
-	game_over_label.text = "GAME OVER\nEarned: +%d Coins\nTotal: %d Coins\nPress any key" % [coins_earned, total_coins]
+	# Update GameOverLabel to show earned and total coins with layout changes
+	var record_str = "\n🎉 NEW RECORD! 🎉" if is_new_record else ""
+	game_over_label.text = "%s\nEarned: +%d Coins\nTotal: %d Coins\nPress any key to retry" % [record_str, coins_earned, total_coins]
+	if game_over_label:
+		game_over_label.add_theme_color_override("font_outline_color", Color.BLACK)
+		game_over_label.add_theme_constant_override("outline_size", 8)
+		game_over_label.add_theme_font_size_override("font_size", 20)
+
+		# Put the gameover.svg at the top of the GameOverLabel
+		var header_img = game_over_label.get_node_or_null("HeaderImage")
+		if not header_img:
+			header_img = TextureRect.new()
+			header_img.name = "HeaderImage"
+			header_img.custom_minimum_size = Vector2(250, 60)
+			header_img.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+			header_img.set_anchors_and_offsets_preset(Control.PRESET_CENTER_TOP)
+			header_img.position = Vector2((game_over_label.size.x - 250)/2.0, -70)
+			game_over_label.add_child(header_img)
+		if tex_gameover:
+			header_img.texture = tex_gameover
+			header_img.show()
 	game_over_label.show()
 
 	if shop_button:
@@ -486,9 +826,14 @@ func restart_game():
 	snake = [Vector2(5, 5), Vector2(4, 5), Vector2(3, 5)]
 	direction = Vector2.RIGHT
 	next_direction = Vector2.RIGHT
+	input_queue.clear()
 	score = 0
 	game_over = false
-	game_over_label.hide()
+	if game_over_label:
+		game_over_label.hide()
+		var header_img = game_over_label.get_node_or_null("HeaderImage")
+		if header_img:
+			header_img.hide()
 
 	# Reset coin states
 	coins_earned = 0
@@ -513,42 +858,125 @@ func restart_game():
 	queue_redraw()
 
 func _draw():
+	# Draw checkerboard background
+	for x in range(GRID_WIDTH):
+		for y in range(GRID_HEIGHT):
+			var cell_color = Color(0.06, 0.06, 0.08) if (x + y) % 2 == 0 else Color(0.1, 0.1, 0.12)
+			draw_rect(Rect2(Vector2(x, y) * GRID_SIZE, Vector2(GRID_SIZE, GRID_SIZE)), cell_color)
+
+	# Draw retro particles
+	for p in particles:
+		var alpha = clamp(p.life / p.max_life, 0.0, 1.0)
+		var c = Color(p.color.r, p.color.g, p.color.b, alpha)
+		var size = lerp(1.0, p.size, alpha)
+		draw_rect(Rect2(p.pos - Vector2(size/2, size/2), Vector2(size, size)), c)
+
+	# Time-based values for animations (bobbing and squash/stretch)
+	var time_sec = Time.get_ticks_msec() / 1000.0
+	var scale_factor = 1.0 + 0.1 * sin(time_sec * 8.0) # subtle squash/stretch pulse
+	var bob_offset = Vector2(0, 2.0 * sin(time_sec * 10.0))
+
 	# Draw food
-	draw_rect(Rect2(food_pos * GRID_SIZE, Vector2(GRID_SIZE, GRID_SIZE)), Color.RED)
+	var food_center = food_pos * GRID_SIZE + Vector2(GRID_SIZE/2.0, GRID_SIZE/2.0) + bob_offset
+	var food_size = Vector2(GRID_SIZE, GRID_SIZE) * scale_factor
+	var food_rect = Rect2(food_center - food_size/2.0, food_size)
+	if tex_food:
+		draw_texture_rect(tex_food, food_rect, false)
+	else:
+		draw_rect(food_rect, Color.RED)
 
 	# Draw physical coin if active
 	if coin_pos != Vector2(-1, -1):
-		var center = coin_pos * GRID_SIZE + Vector2(GRID_SIZE / 2.0, GRID_SIZE / 2.0)
-		var radius = GRID_SIZE / 2.0 - 2.0
-		# Gold outer circle
-		draw_circle(center, radius, Color.GOLD)
-		# Inner shiny circle/dot
-		draw_circle(center, radius / 2.0, Color.YELLOW)
+		var coin_center = coin_pos * GRID_SIZE + Vector2(GRID_SIZE/2.0, GRID_SIZE/2.0) - bob_offset # counter-bob
+		# Spin effect: modify width scale with cosine
+		var coin_scale = Vector2(abs(cos(time_sec * 6.0)), 1.0)
+		var coin_size = Vector2(GRID_SIZE, GRID_SIZE) * coin_scale
+		var coin_rect = Rect2(coin_center - coin_size/2.0, coin_size)
+		if tex_coin:
+			draw_texture_rect(tex_coin, coin_rect, false)
+		else:
+			var center = coin_center
+			var radius = (GRID_SIZE / 2.0 - 2.0) * abs(cos(time_sec * 6.0))
+			draw_circle(center, radius, Color.GOLD)
+			draw_circle(center, radius / 2.0, Color.YELLOW)
 
 	# Draw power-up
 	if power_up_type != PowerUpType.NONE:
-		var color = Color.WHITE
+		var p_center = power_up_pos * GRID_SIZE + Vector2(GRID_SIZE/2.0, GRID_SIZE/2.0) + Vector2(sin(time_sec * 6.0) * 1.5, cos(time_sec * 6.0) * 1.5)
+		var p_size = Vector2(GRID_SIZE, GRID_SIZE) * (1.0 + 0.08 * cos(time_sec * 12.0))
+		var p_rect = Rect2(p_center - p_size/2.0, p_size)
+		var tex_pow: Texture2D = null
 		match power_up_type:
 			PowerUpType.SLOW:
-				color = Color.CYAN
+				tex_pow = tex_pow_slow
 			PowerUpType.DOUBLE_POINTS:
-				color = Color.YELLOW
+				tex_pow = tex_pow_double
 			PowerUpType.SHRINK:
-				color = Color.MAGENTA
-		# Outer rect
-		draw_rect(Rect2(power_up_pos * GRID_SIZE, Vector2(GRID_SIZE, GRID_SIZE)), color)
-		# Inner inset box to make it distinct
-		var inset = 4
-		var inner_size = GRID_SIZE - (inset * 2)
-		draw_rect(Rect2(power_up_pos * GRID_SIZE + Vector2(inset, inset), Vector2(inner_size, inner_size)), Color.BLACK)
+				tex_pow = tex_pow_shrink
 
-	# Draw snake
+		if tex_pow:
+			draw_texture_rect(tex_pow, p_rect, false)
+		else:
+			var color = Color.WHITE
+			match power_up_type:
+				PowerUpType.SLOW:
+					color = Color.CYAN
+				PowerUpType.DOUBLE_POINTS:
+					color = Color.YELLOW
+				PowerUpType.SHRINK:
+					color = Color.MAGENTA
+			draw_rect(p_rect, color)
+			var inset = 4
+			var inner_size = (GRID_SIZE - (inset * 2)) * (1.0 + 0.08 * cos(time_sec * 12.0))
+			draw_rect(Rect2(p_center - Vector2(inner_size/2.0, inner_size/2.0), Vector2(inner_size, inner_size)), Color.BLACK)
+
+	# Draw snake with organic tapering and eyes pointing in direction
 	for i in range(snake.size()):
 		var color = SKINS[active_skin].head_color if i == 0 else SKINS[active_skin].body_color
-		draw_rect(Rect2(snake[i] * GRID_SIZE, Vector2(GRID_SIZE, GRID_SIZE)), color)
 
-	# Draw grid (optional, for visual aid)
+		# Tapering: decrease size slightly towards the tail
+		var t = float(i) / float(snake.size())
+		var segment_scale = lerp(1.0, 0.6, t)
+		var size = GRID_SIZE * segment_scale
+		var offset = (GRID_SIZE - size) / 2.0
+		var segment_rect = Rect2(snake[i] * GRID_SIZE + Vector2(offset, offset), Vector2(size, size))
+
+		# Draw rounded rectangle (using draw_rect with rounded corners isn't always directly available in draw_rect, so draw a slightly inset rect or circle)
+		draw_rect(segment_rect, color)
+
+		# Draw eyes on the head
+		if i == 0:
+			# Base eye coordinates relative to head center
+			var head_center = snake[0] * GRID_SIZE + Vector2(GRID_SIZE / 2.0, GRID_SIZE / 2.0)
+
+			# Eye offsets depending on the current facing direction
+			var eye1_offset = Vector2()
+			var eye2_offset = Vector2()
+
+			if direction == Vector2.RIGHT:
+				eye1_offset = Vector2(4, -4)
+				eye2_offset = Vector2(4, 4)
+			elif direction == Vector2.LEFT:
+				eye1_offset = Vector2(-4, -4)
+				eye2_offset = Vector2(-4, 4)
+			elif direction == Vector2.UP:
+				eye1_offset = Vector2(-4, -4)
+				eye2_offset = Vector2(4, -4)
+			elif direction == Vector2.DOWN:
+				eye1_offset = Vector2(-4, 4)
+				eye2_offset = Vector2(4, 4)
+
+			# White of the eyes
+			draw_circle(head_center + eye1_offset, 3.0, Color.WHITE)
+			draw_circle(head_center + eye2_offset, 3.0, Color.WHITE)
+
+			# Black pupils pointing in direction
+			var pupil_offset = direction * 1.2
+			draw_circle(head_center + eye1_offset + pupil_offset, 1.2, Color.BLACK)
+			draw_circle(head_center + eye2_offset + pupil_offset, 1.2, Color.BLACK)
+
+	# Grid outline lines
 	for x in range(GRID_WIDTH + 1):
-		draw_line(Vector2(x * GRID_SIZE, 0), Vector2(x * GRID_SIZE, GRID_HEIGHT * GRID_SIZE), Color(0.2, 0.2, 0.2))
+		draw_line(Vector2(x * GRID_SIZE, 0), Vector2(x * GRID_SIZE, GRID_HEIGHT * GRID_SIZE), Color(0.15, 0.15, 0.18, 0.5))
 	for y in range(GRID_HEIGHT + 1):
-		draw_line(Vector2(0, y * GRID_SIZE), Vector2(GRID_WIDTH * GRID_SIZE, y * GRID_SIZE), Color(0.2, 0.2, 0.2))
+		draw_line(Vector2(0, y * GRID_SIZE), Vector2(GRID_WIDTH * GRID_SIZE, y * GRID_SIZE), Color(0.15, 0.15, 0.18, 0.5))
