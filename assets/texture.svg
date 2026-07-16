@@ -1,0 +1,65 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 64" width="256" height="64">
+  <defs>
+    <!-- Smooth Linear Gradient Map for Textures -->
+    <linearGradient id="snakeSkin" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#4ade80"/>
+      <stop offset="100%" stop-color="#16a34a"/>
+    </linearGradient>
+    <linearGradient id="berryGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#ef4444"/>
+      <stop offset="100%" stop-color="#b91c1c"/>
+    </linearGradient>
+  </defs>
+
+  <!-- ========================================== -->
+  <!-- ITEM 1: SNAKE BODY SEGMENT TEXTURE (0, 0) -->
+  <!-- ========================================== -->
+  <g id="texture-snake-body" transform="translate(0, 0)">
+    <!-- Base Smooth Green Tile -->
+    <rect width="64" height="64" rx="16" fill="url(#snakeSkin)"/>
+    <!-- Subtle Scale Pattern Overlay -->
+    <circle cx="32" cy="32" r="16" fill="#15803d" opacity="0.3"/>
+    <circle cx="32" cy="32" r="8" fill="#22c55e" opacity="0.4"/>
+  </g>
+
+  <!-- ========================================== -->
+  <!-- ITEM 2: FOOD/APPLE ELEMENT (64, 0)         -->
+  <!-- ========================================== -->
+  <g id="texture-food" transform="translate(64, 0)">
+    <!-- Main Fruit Body -->
+    <circle cx="32" cy="36" r="20" fill="url(#berryGrad)"/>
+    <!-- Shiny Reflection Highlight -->
+    <circle cx="24" cy="26" r="6" fill="#ffffff" opacity="0.4"/>
+    <!-- Little Leaf/Stem Detail -->
+    <path d="M 32,16 C 32,8 40,8 44,12 C 40,16 34,16 32,16" fill="#22c55e"/>
+    <path d="M 32,16 L 32,22" stroke="#78350f" stroke-width="3" stroke-linecap="round"/>
+  </g>
+
+  <!-- ========================================== -->
+  <!-- ITEM 3: SNAKE HEAD DESIGN (128, 0)        -->
+  <!-- ========================================== -->
+  <g id="texture-snake-head" transform="translate(128, 0)">
+    <!-- Base Head Vector Shape -->
+    <rect width="64" height="64" rx="20" fill="url(#snakeSkin)"/>
+    <!-- Sleek Minimalist Eyes -->
+    <circle cx="20" cy="24" r="6" fill="#ffffff"/>
+    <circle cx="20" cy="24" r="3" fill="#0f172a"/>
+    <circle cx="44" cy="24" r="6" fill="#ffffff"/>
+    <circle cx="44" cy="24" r="3" fill="#0f172a"/>
+    <!-- Subtle nostril detailing -->
+    <circle cx="26" cy="48" r="2" fill="#15803d"/>
+    <circle cx="38" cy="48" r="2" fill="#15803d"/>
+  </g>
+
+  <!-- ========================================== -->
+  <!-- ITEM 4: WALL / OBSTACLE BORDER (192, 0)   -->
+  <!-- ========================================== -->
+  <g id="texture-wall" transform="translate(192, 0)">
+    <!-- Dark Tech Structural Block -->
+    <rect width="64" height="64" rx="12" fill="#292524"/>
+    <rect x="4" y="4" width="56" height="56" rx="8" fill="none" stroke="#44403c" stroke-width="4"/>
+    <!-- Minimalist Architectural Center Cross Details -->
+    <line x1="16" y1="32" x2="48" y2="32" stroke="#44403c" stroke-width="4" stroke-linecap="round"/>
+    <line x1="32" y1="16" x2="32" y2="48" stroke="#44403c" stroke-width="4" stroke-linecap="round"/>
+  </g>
+</svg>
