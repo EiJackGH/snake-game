@@ -67,6 +67,8 @@ var tex_gameover: Texture2D
 var tex_shop_bg: Texture2D
 var tex_skin_selected: Texture2D
 var tex_out_of_coins: Texture2D
+var tex_btn_get_coins: Texture2D
+var tex_btn_return_to_game: Texture2D
 
 # Power-up Definitions
 enum PowerUpType { NONE, SLOW, DOUBLE_POINTS, SHRINK }
@@ -139,12 +141,14 @@ func _ready():
 	tex_shop_bg = load("res://assets/snakeskinshop.svg") as Texture2D
 	tex_skin_selected = load("res://assets/skinselected.svg") as Texture2D
 	tex_out_of_coins = load("res://assets/window_out_of_coins.svg") as Texture2D
+	tex_btn_get_coins = load("res://assets/get_coins_button.svg") as Texture2D
+	tex_btn_return_to_game = load("res://assets/return_to_game_button.svg") as Texture2D
 
 	coins_label = Label.new()
 	coins_label.name = "CoinsLabel"
 	coins_label.position = Vector2(10, 30)
 	coins_label.add_theme_font_size_override("font_size", 14)
-	coins_label.add_theme_color_override("font_color", Color.YELLOW)
+	coins_label.add_theme_color_override("font_color", Color(0.95, 0.61, 0.07)) # Warm gold #f39c12
 	coins_label.add_theme_color_override("font_outline_color", Color.BLACK)
 	coins_label.add_theme_constant_override("outline_size", 4)
 	$CanvasLayer.add_child(coins_label)
@@ -180,7 +184,7 @@ func spawn_burst(pos: Vector2, color: Color, count: int = 15):
 
 func setup_pause_overlay():
 	pause_overlay = ColorRect.new()
-	pause_overlay.color = Color(0, 0, 0, 0.7) # semi-transparent dark pane
+	pause_overlay.color = Color(0.07, 0.035, 0.02, 0.8) # semi-transparent deep roasted coffee (#120906)
 	pause_overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	pause_overlay.hide()
 	$CanvasLayer.add_child(pause_overlay)
@@ -199,10 +203,29 @@ func setup_pause_overlay():
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	vbox.add_child(title)
 
+	# Colors for pause menu matching SVGs
+	var color_gold = Color(0.827, 0.514, 0.071)      # #d38312
+	var color_dark_gold = Color(0.639, 0.329, 0.0)   # #a35400
+	var color_brown = Color(0.29, 0.243, 0.239)      # #4a3e3d
+	var color_dark_brown = Color(0.212, 0.176, 0.173) # #362d2c
+
+	var gold_normal = create_button_style(color_gold, color_dark_gold, 6)
+	var gold_hover = create_button_style(color_gold.lightened(0.12), color_dark_gold.lightened(0.12), 6)
+	var gold_pressed = create_button_style(color_gold.darkened(0.15), color_dark_gold.darkened(0.15), 6)
+
+	var brown_normal = create_button_style(color_brown, color_dark_brown, 6)
+	var brown_hover = create_button_style(color_brown.lightened(0.12), color_dark_brown.lightened(0.12), 6)
+	var brown_pressed = create_button_style(color_brown.darkened(0.15), color_dark_brown.darkened(0.15), 6)
+
 	var resume_btn = Button.new()
 	resume_btn.text = "Resume Game"
 	resume_btn.custom_minimum_size = Vector2(160, 40)
 	resume_btn.pressed.connect(toggle_pause)
+
+	resume_btn.add_theme_stylebox_override("normal", gold_normal)
+	resume_btn.add_theme_stylebox_override("hover", gold_hover)
+	resume_btn.add_theme_stylebox_override("pressed", gold_pressed)
+	resume_btn.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
 	vbox.add_child(resume_btn)
 
 	var restart_btn = Button.new()
@@ -212,6 +235,11 @@ func setup_pause_overlay():
 		toggle_pause()
 		restart_game()
 	)
+
+	restart_btn.add_theme_stylebox_override("normal", brown_normal)
+	restart_btn.add_theme_stylebox_override("hover", brown_hover)
+	restart_btn.add_theme_stylebox_override("pressed", brown_pressed)
+	restart_btn.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
 	vbox.add_child(restart_btn)
 
 func toggle_pause():
@@ -227,7 +255,7 @@ func toggle_pause():
 
 func setup_loading_screen():
 	loading_screen = ColorRect.new()
-	loading_screen.color = Color.BLACK
+	loading_screen.color = Color(0.07, 0.035, 0.02) # deep roasted coffee (#120906)
 	loading_screen.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	$CanvasLayer.add_child(loading_screen)
 
@@ -280,9 +308,13 @@ func _on_loading_finished():
 
 func setup_out_of_coins_popup():
 	out_of_coins_panel = Panel.new()
-	out_of_coins_panel.custom_minimum_size = Vector2(240, 160)
+	out_of_coins_panel.custom_minimum_size = Vector2(250, 175)
 	out_of_coins_panel.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
 	out_of_coins_panel.hide()
+
+	# Flat transparent style to let SVG draw the borders and round corners
+	var panel_style = StyleBoxEmpty.new()
+	out_of_coins_panel.add_theme_stylebox_override("panel", panel_style)
 	$CanvasLayer.add_child(out_of_coins_panel)
 
 	# Inset background
@@ -293,50 +325,43 @@ func setup_out_of_coins_popup():
 		bg.texture = tex_out_of_coins
 	out_of_coins_panel.add_child(bg)
 
-	var vbox = VBoxContainer.new()
-	vbox.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	vbox.offset_left = 10
-	vbox.offset_top = 10
-	vbox.offset_right = -10
-	vbox.offset_bottom = -10
-	vbox.add_theme_constant_override("separation", 10)
-	out_of_coins_panel.add_child(vbox)
+	# Setup TextureButton for "Get Coins" matching the transform and size scaled by 0.5
+	var btn_get = TextureButton.new()
+	btn_get.ignore_texture_size = true
+	btn_get.stretch_mode = TextureButton.STRETCH_SCALE
+	if tex_btn_get_coins:
+		btn_get.texture_normal = tex_btn_get_coins
+	btn_get.position = Vector2(30, 130)
+	btn_get.size = Vector2(85, 21)
 
-	var title = Label.new()
-	title.text = "OUT OF COINS!"
-	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	title.add_theme_color_override("font_color", Color.RED)
-	title.add_theme_font_size_override("font_size", 16)
-	title.add_theme_color_override("font_outline_color", Color.BLACK)
-	title.add_theme_constant_override("outline_size", 4)
-	vbox.add_child(title)
+	# Add subtle hover/press self-modulate effects
+	btn_get.mouse_entered.connect(func(): btn_get.self_modulate = Color(1.1, 1.1, 1.1))
+	btn_get.mouse_exited.connect(func(): btn_get.self_modulate = Color.WHITE)
+	btn_get.button_down.connect(func(): btn_get.self_modulate = Color(0.85, 0.85, 0.85))
+	btn_get.button_up.connect(func(): btn_get.self_modulate = Color(1.1, 1.1, 1.1))
 
-	var desc = Label.new()
-	desc.text = "You need more coins to unlock this skin."
-	desc.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	desc.autowrap_mode = TextServer.AUTOWRAP_WORD
-	desc.add_theme_font_size_override("font_size", 12)
-	desc.add_theme_color_override("font_outline_color", Color.BLACK)
-	desc.add_theme_constant_override("outline_size", 4)
-	vbox.add_child(desc)
-
-	var hbox = HBoxContainer.new()
-	hbox.alignment = BoxContainer.ALIGNMENT_CENTER
-	hbox.add_theme_constant_override("separation", 15)
-	vbox.add_child(hbox)
-
-	var btn_get = Button.new()
-	btn_get.text = "Get Coins (+50)"
 	btn_get.pressed.connect(func():
 		_on_coin_pack_pressed(50)
 		close_out_of_coins_popup()
 	)
-	hbox.add_child(btn_get)
+	out_of_coins_panel.add_child(btn_get)
 
-	var btn_close = Button.new()
-	btn_close.text = "Close"
+	# Setup TextureButton for "Return to Game" / "Close" matching the transform and size scaled by 0.5
+	var btn_close = TextureButton.new()
+	btn_close.ignore_texture_size = true
+	btn_close.stretch_mode = TextureButton.STRETCH_SCALE
+	if tex_btn_return_to_game:
+		btn_close.texture_normal = tex_btn_return_to_game
+	btn_close.position = Vector2(135, 130)
+	btn_close.size = Vector2(85, 21)
+
+	btn_close.mouse_entered.connect(func(): btn_close.self_modulate = Color(1.1, 1.1, 1.1))
+	btn_close.mouse_exited.connect(func(): btn_close.self_modulate = Color.WHITE)
+	btn_close.button_down.connect(func(): btn_close.self_modulate = Color(0.85, 0.85, 0.85))
+	btn_close.button_up.connect(func(): btn_close.self_modulate = Color(1.1, 1.1, 1.1))
+
 	btn_close.pressed.connect(close_out_of_coins_popup)
-	hbox.add_child(btn_close)
+	out_of_coins_panel.add_child(btn_close)
 
 func trigger_out_of_coins_popup():
 	if out_of_coins_panel:
@@ -352,18 +377,57 @@ func close_out_of_coins_popup():
 	if out_of_coins_panel:
 		out_of_coins_panel.hide()
 
+# Helper function to create stylish rounded flat buttons matching premium theme
+func create_button_style(bg_color: Color, border_color: Color, corner_radius: int = 5) -> StyleBoxFlat:
+	var sb = StyleBoxFlat.new()
+	sb.bg_color = bg_color
+	sb.border_width_left = 1
+	sb.border_width_right = 1
+	sb.border_width_top = 1
+	sb.border_width_bottom = 1
+	sb.border_color = border_color
+	sb.set_corner_radius_all(corner_radius)
+	# Add a premium inset shadow/soft depth
+	sb.shadow_color = Color(0, 0, 0, 0.3)
+	sb.shadow_size = 2
+	sb.shadow_offset = Vector2(0, 1.5)
+	return sb
+
 func setup_shop_ui():
+	# Define core colors for styles
+	var color_gold = Color(0.827, 0.514, 0.071)      # #d38312
+	var color_dark_gold = Color(0.639, 0.329, 0.0)   # #a35400
+	var color_brown = Color(0.29, 0.243, 0.239)      # #4a3e3d
+	var color_dark_brown = Color(0.212, 0.176, 0.173) # #362d2c
+	var color_gray = Color(0.204, 0.286, 0.369)      # #34495e
+
+	# Styles for Shop Buttons
+	var gold_normal = create_button_style(color_gold, color_dark_gold, 6)
+	var gold_hover = create_button_style(color_gold.lightened(0.12), color_dark_gold.lightened(0.12), 6)
+	var gold_pressed = create_button_style(color_gold.darkened(0.15), color_dark_gold.darkened(0.15), 6)
+
+	# Styles for Close Button / Back Buttons
+	var brown_normal = create_button_style(color_brown, color_dark_brown, 6)
+	var brown_hover = create_button_style(color_brown.lightened(0.12), color_dark_brown.lightened(0.12), 6)
+	var brown_pressed = create_button_style(color_brown.darkened(0.15), color_dark_brown.darkened(0.15), 6)
+
 	# Shop Button
 	shop_button = Button.new()
 	shop_button.text = "Shop"
 	shop_button.position = Vector2(330, 10)
 	shop_button.hide()
 	shop_button.pressed.connect(toggle_shop.bind(true))
+
+	shop_button.add_theme_stylebox_override("normal", gold_normal)
+	shop_button.add_theme_stylebox_override("hover", gold_hover)
+	shop_button.add_theme_stylebox_override("pressed", gold_pressed)
+	shop_button.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
+
 	$CanvasLayer.add_child(shop_button)
 
-	# Shop Panel
+	# Shop Panel (Resized to perfect 4:3 360x270 aspect ratio to match the 600x450 background image)
 	shop_panel = Panel.new()
-	shop_panel.custom_minimum_size = Vector2(300, 300)
+	shop_panel.custom_minimum_size = Vector2(360, 270)
 	shop_panel.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
 	shop_panel.hide()
 	$CanvasLayer.add_child(shop_panel)
@@ -444,6 +508,13 @@ func setup_shop_ui():
 		var btn = Button.new()
 		btn.name = skin_name + "Button"
 		btn.pressed.connect(_on_skin_button_pressed.bind(skin_name))
+
+		# Stylish programmatic button theme matching gold designs
+		btn.add_theme_stylebox_override("normal", gold_normal)
+		btn.add_theme_stylebox_override("hover", gold_hover)
+		btn.add_theme_stylebox_override("pressed", gold_pressed)
+		btn.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
+
 		hbox.add_child(btn)
 
 	var spacer = Control.new()
@@ -469,13 +540,28 @@ func setup_shop_ui():
 		hbox.add_child(label)
 
 		var btn = Button.new()
+		btn.name = pack_name + "Button"
 		btn.text = "Get"
 		btn.pressed.connect(_on_coin_pack_pressed.bind(COIN_PACKS[pack_name]))
+
+		# Stylish programmatic button theme matching gold designs
+		btn.add_theme_stylebox_override("normal", gold_normal)
+		btn.add_theme_stylebox_override("hover", gold_hover)
+		btn.add_theme_stylebox_override("pressed", gold_pressed)
+		btn.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
+
 		hbox.add_child(btn)
 
 	var close_btn = Button.new()
 	close_btn.text = "Close"
 	close_btn.pressed.connect(toggle_shop.bind(false))
+
+	# Stylish programmatic button theme matching close/back brown/coffee theme
+	close_btn.add_theme_stylebox_override("normal", brown_normal)
+	close_btn.add_theme_stylebox_override("hover", brown_hover)
+	close_btn.add_theme_stylebox_override("pressed", brown_pressed)
+	close_btn.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
+
 	vbox.add_child(close_btn)
 
 	update_shop_ui()
@@ -753,6 +839,7 @@ func update_ui():
 		high_score = score_mgr.current_high_score
 	score_label.text = "Score: %d | Best: %d" % [score, max(score, high_score)]
 	if score_label:
+		score_label.add_theme_color_override("font_color", Color(0.97, 0.86, 0.77)) # Premium cream #f7dcc4
 		score_label.add_theme_color_override("font_outline_color", Color.BLACK)
 		score_label.add_theme_constant_override("outline_size", 4)
 	if coins_label:
@@ -858,10 +945,11 @@ func restart_game():
 	queue_redraw()
 
 func _draw():
-	# Draw checkerboard background
+	# Draw checkerboard background matching assets theme (Warm Chocolate & Coffee tones)
 	for x in range(GRID_WIDTH):
 		for y in range(GRID_HEIGHT):
-			var cell_color = Color(0.06, 0.06, 0.08) if (x + y) % 2 == 0 else Color(0.1, 0.1, 0.12)
+			# #1d130b and #2b1c12
+			var cell_color = Color(0.114, 0.075, 0.043) if (x + y) % 2 == 0 else Color(0.169, 0.110, 0.071)
 			draw_rect(Rect2(Vector2(x, y) * GRID_SIZE, Vector2(GRID_SIZE, GRID_SIZE)), cell_color)
 
 	# Draw retro particles
@@ -975,8 +1063,8 @@ func _draw():
 			draw_circle(head_center + eye1_offset + pupil_offset, 1.2, Color.BLACK)
 			draw_circle(head_center + eye2_offset + pupil_offset, 1.2, Color.BLACK)
 
-	# Grid outline lines
+	# Grid outline lines themed with matching semi-transparent warm bronze/brown color
 	for x in range(GRID_WIDTH + 1):
-		draw_line(Vector2(x * GRID_SIZE, 0), Vector2(x * GRID_SIZE, GRID_HEIGHT * GRID_SIZE), Color(0.15, 0.15, 0.18, 0.5))
+		draw_line(Vector2(x * GRID_SIZE, 0), Vector2(x * GRID_SIZE, GRID_HEIGHT * GRID_SIZE), Color(0.29, 0.17, 0.11, 0.4))
 	for y in range(GRID_HEIGHT + 1):
-		draw_line(Vector2(0, y * GRID_SIZE), Vector2(GRID_WIDTH * GRID_SIZE, y * GRID_SIZE), Color(0.15, 0.15, 0.18, 0.5))
+		draw_line(Vector2(0, y * GRID_SIZE), Vector2(GRID_WIDTH * GRID_SIZE, y * GRID_SIZE), Color(0.29, 0.17, 0.11, 0.4))
